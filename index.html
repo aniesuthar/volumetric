@@ -3,110 +3,171 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Volumetric Weight Calculator</title>
+    <title>Volumetric Weight & Shipping Fee Calculator</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
-        <h1>Volumetric Weight Calculator</h1>
+        <h1>Volumetric Weight & Shipping Fee Calculator</h1>
         <div class="form-group">
-            <label for="length">Length (in inches):</label>
-            <input type="number" id="length" required>
+            <label for="unit">Select Unit:</label>
+            <select id="unit" onchange="calculate()">
+                <option value="inches">Inches</option>
+                <option value="cm">Centimeters</option>
+            </select>
         </div>
         <div class="form-group">
-            <label for="breadth">Breadth (in inches):</label>
-            <input type="number" id="breadth" required>
+            <label for="length">Length:</label>
+            <input type="number" id="length" required oninput="calculate()">
         </div>
         <div class="form-group">
-            <label for="height">Height (in inches):</label>
-            <input type="number" id="height" required>
+            <label for="breadth">Breadth:</label>
+            <input type="number" id="breadth" required oninput="calculate()">
         </div>
-        <button onclick="calculateVolumetricWeight()">Calculate</button>
+        <div class="form-group">
+            <label for="height">Height:</label>
+            <input type="number" id="height" required oninput="calculate()">
+        </div>
         <div id="result"></div>
+        <div id="shippingFees"></div>
     </div>
     <style>
         body {
-    font-family: Arial, sans-serif;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-    background-color: #f0f0f0;
-    margin: 0;
-}
-
-.container {
-    background-color: #ffffff;
-    padding: 20px;
-    border-radius: 5px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    text-align: center;
-}
-
-h1 {
-    margin-bottom: 20px;
-}
-
-.form-group {
-    margin-bottom: 15px;
-}
-
-label {
-    display: block;
-    margin-bottom: 5px;
-}
-
-input {
-    width: calc(100% - 22px);
-    padding: 10px;
-    margin: 0;
-    border: 1px solid #ccc;
-    border-radius: 5px;
-}
-
-button {
-    padding: 10px 20px;
-    background-color: #007bff;
-    color: #ffffff;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-}
-
-button:hover {
-    background-color: #0056b3;
-}
-
-#result {
-    margin-top: 20px;
-    font-size: 1.2em;
-    font-weight: bold;
-}
-
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #f0f0f0;
+            margin: 0;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input, select {
+            width: calc(100% - 22px);
+            padding: 10px;
+            margin: 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: #ffffff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        #result, #shippingFees {
+            margin-top: 20px;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
     </style>
     <script src="script.js"></script>
     <script>
-        function calculateVolumetricWeight() {
-    const lengthInches = document.getElementById('length').value;
-    const breadthInches = document.getElementById('breadth').value;
-    const heightInches = document.getElementById('height').value;
+    function calculate() {
+        const length = document.getElementById('length').value;
+        const breadth = document.getElementById('breadth').value;
+        const height = document.getElementById('height').value;
+        const unit = document.getElementById('unit').value;
 
-    if (lengthInches && breadthInches && heightInches) {
-        // Convert inches to centimeters
-        const lengthCm = lengthInches * 2.54;
-        const breadthCm = breadthInches * 2.54;
-        const heightCm = heightInches * 2.54;
+        if (length && breadth && height) {
+            let lengthCm, breadthCm, heightCm;
 
-        // Calculate volumetric weight
-        const volumetricWeight = (lengthCm * breadthCm * heightCm) / 5000;
+            if (unit === 'inches') {
+                lengthCm = length * 2.54;
+                breadthCm = breadth * 2.54;
+                heightCm = height * 2.54;
+            } else {
+                lengthCm = length;
+                breadthCm = breadth;
+                heightCm = height;
+            }
 
-        // Display the result
-        document.getElementById('result').textContent = `Volumetric Weight: ${volumetricWeight.toFixed(2)} kg`;
-    } else {
-        document.getElementById('result').textContent = 'Please enter all dimensions.';
+            // Calculate volumetric weight
+            const volumetricWeight = (lengthCm * breadthCm * heightCm) / 5000;
+
+            // Display the volumetric weight
+            document.getElementById('result').textContent = `Volumetric Weight: ${volumetricWeight.toFixed(2)} kg`;
+
+            // Calculate shipping fees
+            const localShippingFee = calculateShippingFee(volumetricWeight, 'local');
+            const zonalShippingFee = calculateShippingFee(volumetricWeight, 'zonal');
+            const nationalShippingFee = calculateShippingFee(volumetricWeight, 'national');
+
+            // Display the shipping fees
+            document.getElementById('shippingFees').innerHTML = `
+                <p>Local Shipping Fee: ${Math.round(localShippingFee)} INR</p>
+                <p>Zonal Shipping Fee: ${Math.round(zonalShippingFee)} INR</p>
+                <p>National Shipping Fee: ${Math.round(nationalShippingFee)} INR</p>
+            `;
+        } else {
+            document.getElementById('result').textContent = 'Please enter all dimensions.';
+            document.getElementById('shippingFees').innerHTML = '';
+        }
     }
-}
 
-    </script>
+    function calculateShippingFee(weight, type) {
+        const fees = {
+            local: [0, 5, 20, 10, 8, 8, 4],
+            zonal: [0, 20, 20, 20, 15, 12, 5],
+            national: [16, 25, 30, 20, 20, 18, 8]
+        };
+
+        let fee = 0;
+
+        if (type === 'local') {
+            if (weight <= 0.5) return fees.local[0];
+            if (weight <= 1) return fees.local[0] + fees.local[1];
+            if (weight <= 1.5) return fees.local[0] + fees.local[1] + fees.local[2];
+            if (weight <= 2) return fees.local[0] + fees.local[1] + fees.local[2] + fees.local[3];
+            if (weight <= 3) return fees.local[0] + fees.local[1] + fees.local[2] + fees.local[3] + fees.local[4] * 2;
+            if (weight <= 12) return fees.local[0] + fees.local[1] + fees.local[2] + fees.local[3] + fees.local[4] * 2 + fees.local[5] * (weight - 3);
+            return fees.local[0] + fees.local[1] + fees.local[2] + fees.local[3] + fees.local[4] * 2 + fees.local[5] * 9 + fees.local[6] * (weight - 12);
+        }
+
+        if (type === 'zonal') {
+            if (weight <= 0.5) return fees.zonal[0];
+            if (weight <= 1) return fees.zonal[0] + fees.zonal[1];
+            if (weight <= 1.5) return fees.zonal[0] + fees.zonal[1] + fees.zonal[2];
+            if (weight <= 2) return fees.zonal[0] + fees.zonal[1] + fees.zonal[2] + fees.zonal[3];
+            if (weight <= 3) return fees.zonal[0] + fees.zonal[1] + fees.zonal[2] + fees.zonal[3] + fees.zonal[4] * 2;
+            if (weight <= 12) return fees.zonal[0] + fees.zonal[1] + fees.zonal[2] + fees.zonal[3] + fees.zonal[4] * 2 + fees.zonal[5] * (weight - 3);
+            return fees.zonal[0] + fees.zonal[1] + fees.zonal[2] + fees.zonal[3] + fees.zonal[4] * 2 + fees.zonal[5] * 9 + fees.zonal[6] * (weight - 12);
+        }
+
+        if (type === 'national') {
+            if (weight <= 0.5) return fees.national[0];
+            if (weight <= 1) return fees.national[0] + fees.national[1];
+            if (weight <= 1.5) return fees.national[0] + fees.national[1] + fees.national[2];
+            if (weight <= 2) return fees.national[0] + fees.national[1] + fees.national[2] + fees.national[3];
+            if (weight <= 3) return fees.national[0] + fees.national[1] + fees.national[2] + fees.national[3] + fees.national[4] * 2;
+            if (weight <= 12) return fees.national[0] + fees.national[1] + fees.national[2] + fees.national[3] + fees.national[4] * 2 + fees.national[5] * (weight - 3);
+            return fees.national[0] + fees.national[1] + fees.national[2] + fees.national[3] + fees.national[4] * 2 + fees.national[5] * 9 + fees.national[6] * (weight - 12);
+        }
+
+        return fee;
+    }
+</script>
+
 </body>
 </html>
