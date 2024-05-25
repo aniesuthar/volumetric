@@ -3,30 +3,34 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Volumetric Weight & Shipping Fee Calculator</title>
+    <title>Volumetric Weight Calculator</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <div class="container">
-        <h1>Volumetric Weight & Shipping Fee Calculator</h1>
+        <h1>Volumetric Weight Calculator</h1>
         <div class="form-group">
-            <label for="unit">Select Unit:</label>
+            <label for="unit">Unit:</label>
             <select id="unit" onchange="calculate()">
+                <option value="cm">CM</option>
                 <option value="inches">Inches</option>
-                <option value="cm">Centimeters</option>
             </select>
         </div>
         <div class="form-group">
             <label for="length">Length:</label>
-            <input type="number" id="length" required oninput="calculate()">
+            <input type="number" id="length" oninput="calculate()" required>
         </div>
         <div class="form-group">
             <label for="breadth">Breadth:</label>
-            <input type="number" id="breadth" required oninput="calculate()">
+            <input type="number" id="breadth" oninput="calculate()" required>
         </div>
         <div class="form-group">
             <label for="height">Height:</label>
-            <input type="number" id="height" required oninput="calculate()">
+            <input type="number" id="height" oninput="calculate()" required>
+        </div>
+        <div class="form-group">
+            <label for="weight">Product Weight (kg):</label>
+            <input type="number" id="weight" oninput="calculate()" required>
         </div>
         <div id="result"></div>
         <div id="shippingFees"></div>
@@ -65,109 +69,110 @@
             border: 1px solid #ccc;
             border-radius: 5px;
         }
-        button {
-            padding: 10px 20px;
-            background-color: #007bff;
-            color: #ffffff;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #0056b3;
-        }
         #result, #shippingFees {
             margin-top: 20px;
             font-size: 1.2em;
             font-weight: bold;
         }
+        #result p{
+        	font-size: 1rem;
+            dont-weight: 400;
+            }
     </style>
-    <script src="script.js"></script>
     <script>
-    function calculate() {
-        const length = document.getElementById('length').value;
-        const breadth = document.getElementById('breadth').value;
-        const height = document.getElementById('height').value;
-        const unit = document.getElementById('unit').value;
+        function calculate() {
+            const length = document.getElementById('length').value;
+            const breadth = document.getElementById('breadth').value;
+            const height = document.getElementById('height').value;
+            const weight = document.getElementById('weight').value;
+            const unit = document.getElementById('unit').value;
 
-        if (length && breadth && height) {
-            let lengthCm, breadthCm, heightCm;
+            if (length && breadth && height && weight) {
+                let lengthCm, breadthCm, heightCm;
 
-            if (unit === 'inches') {
-                lengthCm = length * 2.54;
-                breadthCm = breadth * 2.54;
-                heightCm = height * 2.54;
+                if (unit === 'inches') {
+                    lengthCm = length * 2.54;
+                    breadthCm = breadth * 2.54;
+                    heightCm = height * 2.54;
+                } else {
+                    lengthCm = length;
+                    breadthCm = breadth;
+                    heightCm = height;
+                }
+
+                // Calculate volumetric weight
+                const volumetricWeight = (lengthCm * breadthCm * heightCm) / 5000;
+
+                // Display the volumetric weight
+                document.getElementById('result').textContent = `Volumetric Weight: ${volumetricWeight.toFixed(2)} kg`;
+
+                // Determine which weight to use for shipping
+const usedWeight = Math.max(volumetricWeight, weight);
+const greaterWeight = (volumetricWeight > weight) ? 'Volumetric Weight' : 'Product Weight';
+const smallerWeight = (volumetricWeight > weight) ? 'Product Weight' : 'Volumetric Weight';
+
+// Display the used weight and type
+document.getElementById('result').innerHTML += `<p>Used Weight for Shipping: ${usedWeight.toFixed(2)} kg (${greaterWeight}) because it is greater than the ${smallerWeight}</p>`;
+
+
+                // Calculate shipping fees
+                const localShippingFee = calculateShippingFee(usedWeight, 'local');
+                const zonalShippingFee = calculateShippingFee(usedWeight, 'zonal');
+                const nationalShippingFee = calculateShippingFee(usedWeight, 'national');
+
+                // Display the shipping fees
+                document.getElementById('shippingFees').innerHTML = `
+                    <p>Local Shipping Fee: ${Math.round(localShippingFee)} INR</p>
+                    <p>Zonal Shipping Fee: ${Math.round(zonalShippingFee)} INR</p>
+                    <p>National Shipping Fee: ${Math.round(nationalShippingFee)} INR</p>
+                `;
             } else {
-                lengthCm = length;
-                breadthCm = breadth;
-                heightCm = height;
+                document.getElementById('result').textContent = 'Please enter all dimensions and weight.';
+                document.getElementById('shippingFees').innerHTML = '';
+            }
+        }
+
+        function calculateShippingFee(weight, type) {
+            const fees = {
+                local: [0, 5, 20, 10, 8, 8, 4],
+                zonal: [0, 20, 20, 20, 15, 12, 5],
+                national: [16, 25, 30, 20, 20, 18, 8]
+            };
+
+            let fee = 0;
+
+            if (type === 'local') {
+                if (weight <= 0.5) return fees.local[0];
+                if (weight <= 1) return fees.local[0] + fees.local[1];
+                if (weight <= 1.5) return fees.local[0] + fees.local[1] + fees.local[2];
+                if (weight <= 2) return fees.local[0] + fees.local[1] + fees.local[2] + fees.local[3];
+                if (weight <= 3) return fees.local[0] + fees.local[1] + fees.local[2] + fees.local[3] + fees.local[4] * 2;
+                if (weight <= 12) return fees.local[0] + fees.local[1] + fees.local[2] + fees.local[3] + fees.local[4] * 2 + fees.local[5] * (weight - 3);
+                return fees.local[0] + fees.local[1] + fees.local[2] + fees.local[3] + fees.local[4] * 2 + fees.local[5] * 9 + fees.local[6] * (weight - 12);
             }
 
-            // Calculate volumetric weight
-            const volumetricWeight = (lengthCm * breadthCm * heightCm) / 5000;
+            if (type === 'zonal') {
+                if (weight <= 0.5) return fees.zonal[0];
+                if (weight <= 1) return fees.zonal[0] + fees.zonal[1];
+                if (weight <= 1.5) return fees.zonal[0] + fees.zonal[1] + fees.zonal[2];
+                if (weight <= 2) return fees.zonal[0] + fees.zonal[1] + fees.zonal[2] + fees.zonal[3];
+                if (weight <= 3) return fees.zonal[0] + fees.zonal[1] + fees.zonal[2] + fees.zonal[3] + fees.zonal[4] * 2;
+                if (weight <= 12) return fees.zonal[0] + fees.zonal[1] + fees.zonal[2] + fees.zonal[3] + fees.zonal[4] * 2 + fees.zonal[5] * (weight - 3);
+                return fees.zonal[0] + fees.zonal[1] + fees.zonal[2] + fees.zonal[3] + fees.zonal[4] * 2 + fees.zonal[5] * 9 + fees.zonal[6] * (weight - 12);
+            }
 
-            // Display the volumetric weight
-            document.getElementById('result').textContent = `Volumetric Weight: ${volumetricWeight.toFixed(2)} kg`;
+            if (type === 'national') {
+                if (weight <= 0.5) return fees.national[0];
+                if (weight <= 1) return fees.national[0] + fees.national[1];
+                if (weight <= 1.5) return fees.national[0] + fees.national[1] + fees.national[2];
+                if (weight <= 2) return fees.national[0] + fees.national[1] + fees.national[2] + fees.national[3];
+                if (weight <= 3) return fees.national[0] + fees.national[1] + fees.national[2] + fees.national[3] + fees.national[4] * 2;
+                if (weight <= 12) return fees.national[0] + fees.national[1] + fees.national[2] + fees.national[3] + fees.national[4] * 2 + fees.national[5] * (weight - 3);
+                return fees.national[0] + fees.national[1] + fees.national[2] + fees.national[3] + fees.national[4] * 2 + fees.national[5] * 9 + fees.national[6] * (weight - 12);
+            }
 
-            // Calculate shipping fees
-            const localShippingFee = calculateShippingFee(volumetricWeight, 'local');
-            const zonalShippingFee = calculateShippingFee(volumetricWeight, 'zonal');
-            const nationalShippingFee = calculateShippingFee(volumetricWeight, 'national');
-
-            // Display the shipping fees
-            document.getElementById('shippingFees').innerHTML = `
-                <p>Local Shipping Fee: ${Math.round(localShippingFee)} INR</p>
-                <p>Zonal Shipping Fee: ${Math.round(zonalShippingFee)} INR</p>
-                <p>National Shipping Fee: ${Math.round(nationalShippingFee)} INR</p>
-            `;
-        } else {
-            document.getElementById('result').textContent = 'Please enter all dimensions.';
-            document.getElementById('shippingFees').innerHTML = '';
+            return fee;
         }
-    }
-
-    function calculateShippingFee(weight, type) {
-        const fees = {
-            local: [0, 5, 20, 10, 8, 8, 4],
-            zonal: [0, 20, 20, 20, 15, 12, 5],
-            national: [16, 25, 30, 20, 20, 18, 8]
-        };
-
-        let fee = 0;
-
-        if (type === 'local') {
-            if (weight <= 0.5) return fees.local[0];
-            if (weight <= 1) return fees.local[0] + fees.local[1];
-            if (weight <= 1.5) return fees.local[0] + fees.local[1] + fees.local[2];
-            if (weight <= 2) return fees.local[0] + fees.local[1] + fees.local[2] + fees.local[3];
-            if (weight <= 3) return fees.local[0] + fees.local[1] + fees.local[2] + fees.local[3] + fees.local[4] * 2;
-            if (weight <= 12) return fees.local[0] + fees.local[1] + fees.local[2] + fees.local[3] + fees.local[4] * 2 + fees.local[5] * (weight - 3);
-            return fees.local[0] + fees.local[1] + fees.local[2] + fees.local[3] + fees.local[4] * 2 + fees.local[5] * 9 + fees.local[6] * (weight - 12);
-        }
-
-        if (type === 'zonal') {
-            if (weight <= 0.5) return fees.zonal[0];
-            if (weight <= 1) return fees.zonal[0] + fees.zonal[1];
-            if (weight <= 1.5) return fees.zonal[0] + fees.zonal[1] + fees.zonal[2];
-            if (weight <= 2) return fees.zonal[0] + fees.zonal[1] + fees.zonal[2] + fees.zonal[3];
-            if (weight <= 3) return fees.zonal[0] + fees.zonal[1] + fees.zonal[2] + fees.zonal[3] + fees.zonal[4] * 2;
-            if (weight <= 12) return fees.zonal[0] + fees.zonal[1] + fees.zonal[2] + fees.zonal[3] + fees.zonal[4] * 2 + fees.zonal[5] * (weight - 3);
-            return fees.zonal[0] + fees.zonal[1] + fees.zonal[2] + fees.zonal[3] + fees.zonal[4] * 2 + fees.zonal[5] * 9 + fees.zonal[6] * (weight - 12);
-        }
-
-        if (type === 'national') {
-            if (weight <= 0.5) return fees.national[0];
-            if (weight <= 1) return fees.national[0] + fees.national[1];
-            if (weight <= 1.5) return fees.national[0] + fees.national[1] + fees.national[2];
-            if (weight <= 2) return fees.national[0] + fees.national[1] + fees.national[2] + fees.national[3];
-            if (weight <= 3) return fees.national[0] + fees.national[1] + fees.national[2] + fees.national[3] + fees.national[4] * 2;
-            if (weight <= 12) return fees.national[0] + fees.national[1] + fees.national[2] + fees.national[3] + fees.national[4] * 2 + fees.national[5] * (weight - 3);
-            return fees.national[0] + fees.national[1] + fees.national[2] + fees.national[3] + fees.national[4] * 2 + fees.national[5] * 9 + fees.national[6] * (weight - 12);
-        }
-
-        return fee;
-    }
-</script>
-
+    </script>
 </body>
 </html>
