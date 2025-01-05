@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Volumetric Weight Calculator</title>
     <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
     <div class="container">
         <h1>Volumetric Weight Calculator</h1>
@@ -17,15 +19,15 @@
             </select>
         </div>
         <div class="form-group">
-            <label for="length">Length:</label>
+            <label for="length">Length: <span id="lengthConverted"></span></label>
             <input type="number" id="length" oninput="calculate()" required>
         </div>
         <div class="form-group">
-            <label for="breadth">Breadth:</label>
+            <label for="breadth">Breadth: <span id="breadthConverted"></span></label>
             <input type="number" id="breadth" oninput="calculate()" required>
         </div>
         <div class="form-group">
-            <label for="height">Height:</label>
+            <label for="height">Height: <span id="heightConverted"></span></label>
             <input type="number" id="height" oninput="calculate()" required>
         </div>
         <div class="form-group">
@@ -44,40 +46,56 @@
             height: 100vh;
             background-color: #f0f0f0;
             margin: 0;
+            align-content: center;
         }
+
         .container {
             background-color: #ffffff;
             padding: 20px;
             border-radius: 5px;
+            height: fit-content;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             text-align: center;
         }
+
         h1 {
             margin-bottom: 20px;
         }
+
         .form-group {
             margin-bottom: 15px;
         }
+
         label {
             display: block;
             margin-bottom: 5px;
         }
-        input, select {
+
+        input,
+        select {
             width: calc(100% - 22px);
             padding: 10px;
             margin: 0;
             border: 1px solid #ccc;
             border-radius: 5px;
         }
-        #result, #shippingFees {
+
+        #result,
+        #shippingFees {
+            text-align: center;
             margin-top: 20px;
             font-size: 1.2em;
             font-weight: bold;
         }
-        #result p{
-        	font-size: 1rem;
-            dont-weight: 400;
-            }
+
+        #result p {
+            font-size: 1rem;
+            font-weight: 400;
+        }
+
+        .used-weight {
+            color: red;
+        }
     </style>
     <script>
         function calculate() {
@@ -87,13 +105,21 @@
             const weight = document.getElementById('weight').value;
             const unit = document.getElementById('unit').value;
 
-            if (length && breadth && height && weight) {
+            // Conversion factor
+            const conversionFactor = 2.54;
+
+            // Display converted values
+            updateConvertedValue('length', length, unit, conversionFactor);
+            updateConvertedValue('breadth', breadth, unit, conversionFactor);
+            updateConvertedValue('height', height, unit, conversionFactor);
+
+            if (length && breadth && height) {
                 let lengthCm, breadthCm, heightCm;
 
                 if (unit === 'inches') {
-                    lengthCm = length * 2.54;
-                    breadthCm = breadth * 2.54;
-                    heightCm = height * 2.54;
+                    lengthCm = length * conversionFactor;
+                    breadthCm = breadth * conversionFactor;
+                    heightCm = height * conversionFactor;
                 } else {
                     lengthCm = length;
                     breadthCm = breadth;
@@ -107,13 +133,12 @@
                 document.getElementById('result').textContent = `Volumetric Weight: ${volumetricWeight.toFixed(2)} kg`;
 
                 // Determine which weight to use for shipping
-const usedWeight = Math.max(volumetricWeight, weight);
-const greaterWeight = (volumetricWeight > weight) ? 'Volumetric Weight' : 'Product Weight';
-const smallerWeight = (volumetricWeight > weight) ? 'Product Weight' : 'Volumetric Weight';
+                const usedWeight = Math.max(volumetricWeight, weight);
+                const greaterWeight = (volumetricWeight > weight) ? 'Volumetric Weight' : 'Product Weight';
+                const smallerWeight = (volumetricWeight > weight) ? 'Product Weight' : 'Volumetric Weight';
 
-// Display the used weight and type
-document.getElementById('result').innerHTML += `<p>Used Weight for Shipping: ${usedWeight.toFixed(2)} kg (${greaterWeight}) because it is greater than the ${smallerWeight}</p>`;
-
+                // Display the used weight and type
+                document.getElementById('result').innerHTML += `<p class="used-weight">Used Weight for Shipping: ${usedWeight.toFixed(2)} kg (${greaterWeight}) because it is greater than the ${smallerWeight}</p>`;
 
                 // Calculate shipping fees
                 const localShippingFee = calculateShippingFee(usedWeight, 'local');
@@ -122,15 +147,28 @@ document.getElementById('result').innerHTML += `<p>Used Weight for Shipping: ${u
 
                 // Display the shipping fees
                 document.getElementById('shippingFees').innerHTML = `
-                    <p>Local Shipping Fee: ${Math.round(localShippingFee)} INR</p>
-                    <p>Zonal Shipping Fee: ${Math.round(zonalShippingFee)} INR</p>
-                    <p>National Shipping Fee: ${Math.round(nationalShippingFee)} INR</p>
-                `;
+            <p>Local Shipping Fee: ${Math.round(localShippingFee)} INR</p>
+            <p>Zonal Shipping Fee: ${Math.round(zonalShippingFee)} INR</p>
+            <p>National Shipping Fee: ${Math.round(nationalShippingFee)} INR</p>
+        `;
             } else {
                 document.getElementById('result').textContent = 'Please enter all dimensions and weight.';
                 document.getElementById('shippingFees').innerHTML = '';
             }
         }
+
+        function updateConvertedValue(field, value, unit, conversionFactor) {
+            const convertedValueSpan = document.getElementById(`${field}Converted`);
+            if (value) {
+                const convertedValue = unit === 'inches'
+                    ? (value * conversionFactor).toFixed(2) + ' cm'
+                    : (value / conversionFactor).toFixed(2) + ' inches';
+                convertedValueSpan.textContent = convertedValue;
+            } else {
+                convertedValueSpan.textContent = '';
+            }
+        }
+
 
         function calculateShippingFee(weight, type) {
             const fees = {
@@ -175,4 +213,5 @@ document.getElementById('result').innerHTML += `<p>Used Weight for Shipping: ${u
         }
     </script>
 </body>
+
 </html>
