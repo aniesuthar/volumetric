@@ -336,9 +336,9 @@
                 marginRateGroup.style.display = 'none';
                 finalPriceGroup.style.display = 'block';
             }
-            calculate(); // Reset calculated values
+            calculatePrice(); // Reset calculated values
         }
-        function calculate() {
+        function calculatePrice() {
             const inputType = document.getElementById('inputType').value;
             const manufacturingCost = parseFloat(document.getElementById('manufacturingCost').value) || 0;
             const marginRateInput = parseFloat(document.getElementById('marginRate').value) || 0;
