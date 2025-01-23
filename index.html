@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Volumetric Weight Calculator</title>
+    <title>Maghji Calculators</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 
@@ -190,6 +190,7 @@
             font-size: 12px;
             font-weight: 300;
         }
+
         @media only screen and (max-width: 768px) {
             .container {
                 flex-direction: column;
@@ -197,6 +198,12 @@
 
             }
 
+            h1 {
+                font-size: 24px
+            }
+            h2 {
+                font-size: 20px
+            }
         }
     </style>
     <script>
@@ -334,16 +341,14 @@
         function calculate() {
             const inputType = document.getElementById('inputType').value;
             const manufacturingCost = parseFloat(document.getElementById('manufacturingCost').value) || 0;
-            const marginRate = parseFloat(document.getElementById('marginRate').value) || 0;
+            const marginRateInput = parseFloat(document.getElementById('marginRate').value) || 0;
             const finalPriceInput = parseFloat(document.getElementById('finalPriceInput').value) || 0;
             const amazonFeeRate = parseFloat(document.getElementById('amazonFeeRate').value) || 0;
 
+            const fixedClosingFee = 61; // Fixed closing fee
+            const gstRate = 0.18; // GST
             const calculationDetails = document.getElementById('calculationDetails');
             const errorDisplay = document.getElementById('errorDisplay');
-
-            // Fixed cost (closing fee) charged by Amazon
-            const fixedClosingFee = 61;
-            const gstRate = 0.18; // 18% GST
 
             // Clear previous errors
             errorDisplay.textContent = '';
@@ -355,49 +360,53 @@
                 return;
             }
 
+            // Helper function to round numbers consistently
+            const roundToTwo = (num) => Math.round(num * 100) / 100;
+
+            // Calculate when input type is 'manufacturingCost'
             if (inputType === 'manufacturingCost') {
-                const totalPercentage = 1 - (marginRate / 100) - (amazonFeeRate / 100);
+                // Calculate the total percentage subtracting Amazon Fee + GST + Margin
+                const totalPercentage = 1 - ((marginRateInput / 100) + (amazonFeeRate / 100) + (gstRate * amazonFeeRate / 100)); // Amazon Fee Rate + GST included
 
                 if (totalPercentage > 0) {
-                    const finalPrice = manufacturingCost / totalPercentage;
-
-                    // Amazon Fees Calculation
-                    const amazonFeesWithoutGST = (amazonFeeRate / 100) * finalPrice;
-                    const totalAmazonFeesBeforeGST = amazonFeesWithoutGST + fixedClosingFee;
-                    const amazonGST = totalAmazonFeesBeforeGST * gstRate;
-                    const amazonFees = totalAmazonFeesBeforeGST + amazonGST;
+                    const finalPrice = (manufacturingCost + fixedClosingFee + fixedClosingFee * gstRate) / totalPercentage;
+                    const amazonFeesWithoutGST = (finalPrice * (amazonFeeRate / 100));
+                    const gstOnAmazonFees = (amazonFeesWithoutGST + fixedClosingFee) * gstRate; // Add GST
+                    const amazonFees = amazonFeesWithoutGST + fixedClosingFee + gstOnAmazonFees;
 
                     const marginPrice = finalPrice - amazonFees - manufacturingCost;
 
-                    document.getElementById('finalPrice').textContent = `₹${finalPrice.toFixed(2)}`;
-                    document.getElementById('marginPrice').textContent = `₹${marginPrice.toFixed(2)}`;
-                    document.getElementById('amazonFees').textContent = `₹${amazonFees.toFixed(2)}`;
-                    document.getElementById('marginRateDisplay').textContent = `${marginRate.toFixed(2)}%`;
+                    const profitMarginRate = (marginPrice / finalPrice) * 100; // Calculate margin rate correctly
+
+                    // Display values
+                    document.getElementById('finalPrice').textContent = `₹${roundToTwo(finalPrice)}`;
+                    document.getElementById('amazonFees').innerHTML = `₹${roundToTwo(amazonFeesWithoutGST)}<span class="small">(${amazonFeeRate}%)</span> + ₹${fixedClosingFee}<span class="small">(Fix)</span> + ₹${roundToTwo((gstOnAmazonFees))}<span class="small">(Tax)</span> = ₹${roundToTwo(amazonFees)}`;
+                    document.getElementById('marginPrice').textContent = `₹${roundToTwo(marginPrice)}`;
+                    document.getElementById('marginRateDisplay').textContent = `${roundToTwo(profitMarginRate)}%`;
 
                     // Update Calculation Details
-                    calculationDetails.innerHTML = `₹${finalPrice.toFixed(2)} - ₹${amazonFees.toFixed(2)} - ₹${manufacturingCost.toFixed(2)} = ₹${marginPrice.toFixed(2)}`;
+                    calculationDetails.innerHTML = `₹${roundToTwo(finalPrice)} - ₹${roundToTwo(amazonFees)} - ₹${roundToTwo(manufacturingCost)} = ₹${roundToTwo(marginPrice)}`;
                 } else {
                     resetFields("Invalid Input!");
                 }
-            } else if (inputType === 'finalPrice') {
-                // Amazon Fees Calculation
+            }
+            // Calculate when input type is 'finalPrice'
+            else if (inputType === 'finalPrice') {
                 const amazonFeesWithoutGST = (amazonFeeRate / 100) * finalPriceInput;
-                const totalAmazonFeesBeforeGST = amazonFeesWithoutGST + fixedClosingFee;
-                const amazonGST = totalAmazonFeesBeforeGST * gstRate;
-                const amazonFees = totalAmazonFeesBeforeGST + amazonGST;
-
+                const amazonFees = amazonFeesWithoutGST + fixedClosingFee + (amazonFeesWithoutGST + fixedClosingFee) * gstRate; // Add GST
                 const marginPrice = finalPriceInput - amazonFees - manufacturingCost;
 
-                // Corrected Margin Rate Calculation
-                const profitMarginRate = (marginPrice / finalPriceInput) * 100;
+                // Correct Margin Rate Calculation
+                const profitMarginRate = (marginPrice / finalPriceInput) * 100; // Ensures consistency
 
-                document.getElementById('finalPrice').textContent = `₹${finalPriceInput.toFixed(2)}`;
-                document.getElementById('amazonFees').innerHTML = ` ₹${amazonFeesWithoutGST.toFixed(2)}<span class="small">(${amazonFeeRate.toFixed(1)}%)</span> +  ₹${fixedClosingFee.toFixed(2)}<span class="small">(Fix)</span> + ₹${amazonGST.toFixed(2)}<span class="small">(Tax)</span> = ₹${amazonFees.toFixed(2)}`;
-                document.getElementById('marginPrice').textContent = `₹${marginPrice.toFixed(2)}`;
-                document.getElementById('marginRateDisplay').textContent = `${profitMarginRate.toFixed(2)}%`;
+                // Display values
+                document.getElementById('finalPrice').textContent = `₹${roundToTwo(finalPriceInput)}`;
+                document.getElementById('amazonFees').textContent = `₹${roundToTwo(amazonFeesWithoutGST)}(${amazonFeeRate}%) + ₹${fixedClosingFee}(Fix) + ₹${roundToTwo((amazonFees - amazonFeesWithoutGST - fixedClosingFee))}(Tax) = ₹${roundToTwo(amazonFees)}`;
+                document.getElementById('marginPrice').textContent = `₹${roundToTwo(marginPrice)}`;
+                document.getElementById('marginRateDisplay').textContent = `${roundToTwo(profitMarginRate)}%`;
 
                 // Update Calculation Details
-                calculationDetails.innerHTML = `₹${finalPriceInput.toFixed(2)} - ₹${amazonFees.toFixed(2)} - ₹${manufacturingCost.toFixed(2)} = ₹${marginPrice.toFixed(2)}`;
+                calculationDetails.innerHTML = `₹${roundToTwo(finalPriceInput)} - ₹${roundToTwo(amazonFees)} - ₹${roundToTwo(manufacturingCost)} = ₹${roundToTwo(marginPrice)}`;
             }
         }
 
@@ -406,7 +415,10 @@
             document.getElementById('amazonFees').textContent = message;
             document.getElementById('marginPrice').textContent = message;
             document.getElementById('marginRateDisplay').textContent = message;
+            document.getElementById('calculationDetails').textContent = '';
         }
+
+
 
 
     </script>
