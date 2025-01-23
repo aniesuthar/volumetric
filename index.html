@@ -50,7 +50,7 @@
                 </select>
             </div>
             <div class="form-group" id="manufacturingCostGroup">
-                <label for="manufacturingCost">Manufacturing Cost (₹):</label>
+                <label for="manufacturingCost">Manufacturing & Delivery Cost (₹):</label>
                 <input type="number" id="manufacturingCost" oninput="calculate()" required>
             </div>
             <div class="form-group" id="marginRateGroup">
@@ -62,14 +62,10 @@
                 <input type="number" id="finalPriceInput" oninput="calculate()" required>
             </div>
             <div class="form-group" id="amazonFeeGroup">
-                <label for="amazonFeeRate">Amazon Fee Rate (%):</label>
+                <label for="amazonFeeRate">Amazon Fee Rate (%): <span class="small">(15.5% for furniture)</span></label>
                 <input type="number" id="amazonFeeRate" oninput="calculate()" required>
             </div>
             <div class="group">
-                <div class="form-group">
-                    <label>Final Price (₹):</label>
-                    <p id="finalPrice">₹0.00</p>
-                </div>
                 <div class="form-group">
                     <label>Amazon Fees (₹):</label>
                     <p id="amazonFees">₹0.00</p>
@@ -78,7 +74,11 @@
 
             <div class="group">
                 <div class="form-group">
-                    <label>Margin Price (₹):</label>
+                    <label>Final Price (₹):</label>
+                    <p id="finalPrice">₹0.00</p>
+                </div>
+                <div class="form-group">
+                    <label>Profit Margin (₹):</label>
                     <p id="marginPrice">₹0.00</p>
                 </div>
                 <div class="form-group">
@@ -186,6 +186,10 @@
             color: green;
         }
 
+        .small {
+            font-size: 12px;
+            font-weight: 300;
+        }
         @media only screen and (max-width: 768px) {
             .container {
                 flex-direction: column;
@@ -337,6 +341,10 @@
             const calculationDetails = document.getElementById('calculationDetails');
             const errorDisplay = document.getElementById('errorDisplay');
 
+            // Fixed cost (closing fee) charged by Amazon
+            const fixedClosingFee = 61;
+            const gstRate = 0.18; // 18% GST
+
             // Clear previous errors
             errorDisplay.textContent = '';
 
@@ -352,8 +360,14 @@
 
                 if (totalPercentage > 0) {
                     const finalPrice = manufacturingCost / totalPercentage;
-                    const marginPrice = (marginRate / 100) * finalPrice;
-                    const amazonFees = (amazonFeeRate / 100) * finalPrice;
+
+                    // Amazon Fees Calculation
+                    const amazonFeesWithoutGST = (amazonFeeRate / 100) * finalPrice;
+                    const totalAmazonFeesBeforeGST = amazonFeesWithoutGST + fixedClosingFee;
+                    const amazonGST = totalAmazonFeesBeforeGST * gstRate;
+                    const amazonFees = totalAmazonFeesBeforeGST + amazonGST;
+
+                    const marginPrice = finalPrice - amazonFees - manufacturingCost;
 
                     document.getElementById('finalPrice').textContent = `₹${finalPrice.toFixed(2)}`;
                     document.getElementById('marginPrice').textContent = `₹${marginPrice.toFixed(2)}`;
@@ -361,19 +375,24 @@
                     document.getElementById('marginRateDisplay').textContent = `${marginRate.toFixed(2)}%`;
 
                     // Update Calculation Details
-                    calculationDetails.innerHTML = `₹${finalPrice.toFixed(2)} - ₹${marginPrice.toFixed(2)} - ₹${amazonFees.toFixed(2)} = ₹${manufacturingCost.toFixed(2)}`;
+                    calculationDetails.innerHTML = `₹${finalPrice.toFixed(2)} - ₹${amazonFees.toFixed(2)} - ₹${manufacturingCost.toFixed(2)} = ₹${marginPrice.toFixed(2)}`;
                 } else {
                     resetFields("Invalid Input!");
                 }
             } else if (inputType === 'finalPrice') {
-                const amazonFees = (amazonFeeRate / 100) * finalPriceInput;
+                // Amazon Fees Calculation
+                const amazonFeesWithoutGST = (amazonFeeRate / 100) * finalPriceInput;
+                const totalAmazonFeesBeforeGST = amazonFeesWithoutGST + fixedClosingFee;
+                const amazonGST = totalAmazonFeesBeforeGST * gstRate;
+                const amazonFees = totalAmazonFeesBeforeGST + amazonGST;
+
                 const marginPrice = finalPriceInput - amazonFees - manufacturingCost;
 
                 // Corrected Margin Rate Calculation
                 const profitMarginRate = (marginPrice / finalPriceInput) * 100;
 
                 document.getElementById('finalPrice').textContent = `₹${finalPriceInput.toFixed(2)}`;
-                document.getElementById('amazonFees').textContent = `₹${amazonFees.toFixed(2)}`;
+                document.getElementById('amazonFees').innerHTML = ` ₹${amazonFeesWithoutGST.toFixed(2)}<span class="small">(${amazonFeeRate.toFixed(1)}%)</span> +  ₹${fixedClosingFee.toFixed(2)}<span class="small">(Fix)</span> + ₹${amazonGST.toFixed(2)}<span class="small">(Tax)</span> = ₹${amazonFees.toFixed(2)}`;
                 document.getElementById('marginPrice').textContent = `₹${marginPrice.toFixed(2)}`;
                 document.getElementById('marginRateDisplay').textContent = `${profitMarginRate.toFixed(2)}%`;
 
@@ -388,6 +407,8 @@
             document.getElementById('marginPrice').textContent = message;
             document.getElementById('marginRateDisplay').textContent = message;
         }
+
+
     </script>
 </body>
 
