@@ -6,6 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Maghji Calculators</title>
     <link rel="stylesheet" href="styles.css">
+    <meta property="og:image:secure_url" content="https://www.maghji.com/cdn/shop/files/ogImg.png?v=1740902203">
+    <link rel="shortcut icon" href="//www.maghji.com/cdn/shop/files/magh-ji-Profile.png?crop=center&height=32&v=1740255746&width=32" type="image/png">
+    <title class="index">Calculators - MaghjiFurnishings</title>
+    <meta name="description" content="Maghji Furnishings, a brand by Bhadrecha Metalworks Co.,These calculators are developed by Maghji's tech team.">
+    <meta property="og:site_name" content="MaghjiFurnishings Calculators">
 </head>
 
 <body>
@@ -54,7 +59,7 @@
                 <input type="number" id="manufacturingCost" oninput="calculatePrice()" required>
             </div>
             <div class="form-group" id="marginRateGroup">
-                <label for="marginRate">Profit Margin Rate (%):</label>
+                <label for="marginRate">Profit Margin Rate (%):<span class="small"> (Amazon)</span></label>
                 <input type="number" id="marginRate" oninput="calculatePrice()" required>
             </div>
             <div class="form-group" id="finalPriceGroup" style="display: none;">
@@ -82,8 +87,12 @@
                     <p id="marginPrice">₹0.00</p>
                 </div>
                 <div class="form-group">
-                    <label>Margin Rate (%):</label>
+                    <label>Margin (%): <span class="small">(From Amazon)</span></label>
                     <p id="marginRateDisplay">0.00%</p>
+                </div>
+                <div class="form-group">
+                    <label>Margin (%): <span class="small">(on Our Price)</span></label>
+                    <p id="marginRateDisplayO">0.00%</p>
                 </div>
             </div>
 
@@ -174,7 +183,7 @@
             font-weight: 600;
         }
 
-        #finalPrice {
+        #finalPrice, #marginRateDisplay {
             color: orange;
         }
 
@@ -182,7 +191,7 @@
             color: #b22222;
         }
 
-        #marginPrice {
+        #marginPrice, #marginRateDisplayO {
             color: green;
         }
 
@@ -377,15 +386,17 @@
                     const marginPrice = finalPrice - amazonFees - manufacturingCost;
 
                     const profitMarginRate = (marginPrice / finalPrice) * 100; // Calculate margin rate correctly
+                    const profitMarginRateOur = (marginPrice / manufacturingCost) * 100; // Calculate margin rate correctly
 
                     // Display values
                     document.getElementById('finalPrice').textContent = `₹${roundToTwo(finalPrice)}`;
                     document.getElementById('amazonFees').innerHTML = `₹${roundToTwo(amazonFeesWithoutGST)}<span class="small">(${amazonFeeRate}%)</span> + ₹${fixedClosingFee}<span class="small">(Fix)</span> + ₹${roundToTwo((gstOnAmazonFees))}<span class="small">(Tax)</span> = ₹${roundToTwo(amazonFees)}`;
                     document.getElementById('marginPrice').textContent = `₹${roundToTwo(marginPrice)}`;
                     document.getElementById('marginRateDisplay').textContent = `${roundToTwo(profitMarginRate)}%`;
+                    document.getElementById('marginRateDisplayO').textContent = `${roundToTwo(profitMarginRateOur)}%`;
 
                     // Update Calculation Details
-                    calculationDetails.innerHTML = `₹${roundToTwo(finalPrice)} - ₹${roundToTwo(amazonFees)} - ₹${roundToTwo(manufacturingCost)} = ₹${roundToTwo(marginPrice)}`;
+                    calculationDetails.innerHTML = `<span  style="color: orange;">₹${roundToTwo(finalPrice)}</span> - <span  style="color: red;">₹${roundToTwo(amazonFees)}</span> - <span  style="color: green;">₹${roundToTwo(manufacturingCost)}</span> = ₹${roundToTwo(marginPrice)}`;
                 } else {
                     resetFields("Invalid Input!");
                 }
@@ -398,15 +409,17 @@
 
                 // Correct Margin Rate Calculation
                 const profitMarginRate = (marginPrice / finalPriceInput) * 100; // Ensures consistency
+                const profitMarginRateOur = (marginPrice / manufacturingCost) * 100; // Ensures consistency
 
                 // Display values
                 document.getElementById('finalPrice').textContent = `₹${roundToTwo(finalPriceInput)}`;
                 document.getElementById('amazonFees').textContent = `₹${roundToTwo(amazonFeesWithoutGST)}(${amazonFeeRate}%) + ₹${fixedClosingFee}(Fix) + ₹${roundToTwo((amazonFees - amazonFeesWithoutGST - fixedClosingFee))}(Tax) = ₹${roundToTwo(amazonFees)}`;
                 document.getElementById('marginPrice').textContent = `₹${roundToTwo(marginPrice)}`;
                 document.getElementById('marginRateDisplay').textContent = `${roundToTwo(profitMarginRate)}%`;
+                document.getElementById('marginRateDisplayO').textContent = `${roundToTwo(profitMarginRateOur)}%`;
 
                 // Update Calculation Details
-                calculationDetails.innerHTML = `₹${roundToTwo(finalPriceInput)} - ₹${roundToTwo(amazonFees)} - ₹${roundToTwo(manufacturingCost)} = ₹${roundToTwo(marginPrice)}`;
+                calculationDetails.innerHTML = `<span  style="color: orange;">₹${roundToTwo(finalPriceInput)}</span> - <span  style="color: red;">₹${roundToTwo(amazonFees)}</span> - <span  style="color: green;">₹${roundToTwo(manufacturingCost)}</span> = ₹${roundToTwo(marginPrice)}`;
             }
         }
 
