@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Maghji Calculators</title>
+    <title>Calculators - MaghjiFurnishings</title>
     <link rel="stylesheet" href="styles.css">
     <meta property="og:image:secure_url" content="https://www.maghji.com/cdn/shop/files/ogImg.png?v=1740902203">
     <link rel="shortcut icon" href="//www.maghji.com/cdn/shop/files/magh-ji-Profile.png?crop=center&height=32&v=1740255746&width=32" type="image/png">
@@ -87,12 +87,12 @@
                     <p id="finalPrice">₹0.00</p>
                 </div>
                 <div class="form-group">
-                    <label>Profit Margin (₹):</label>
-                    <p id="marginPrice">₹0.00</p>
-                </div>
-                <div class="form-group">
                     <label>Margin (%): <span class="small">(From Amazon)</span></label>
                     <p id="marginRateDisplay">0.00%</p>
+                </div>
+                <div class="form-group">
+                    <label>Pure Profit (₹):</label>
+                    <p id="marginPrice">₹0.00</p>
                 </div>
                 <div class="form-group">
                     <label>Margin (%): <span class="small">(on Our Price)</span></label>
@@ -406,7 +406,7 @@
                     document.getElementById('amazonFees').innerHTML = `₹${roundToTwo(amazonFeesWithoutGST)}<span class="small">(${amazonFeeRate}%)</span> + ₹${fixedClosingFee}<span class="small">(Fix)</span> + ₹${roundToTwo((gstOnAmazonFees))}<span class="small">(Tax)</span> = ₹${roundToTwo(amazonFees)}`;
                     document.getElementById('marginPrice').textContent = `₹${roundToTwo(marginPrice)}`;
                     document.getElementById('marginRateDisplay').textContent = `${roundToTwo(profitMarginRate)}%`;
-                    document.getElementById('marginRateDisplayO').textContent = `${roundToTwo(profitMarginRateOur)}%`;
+                    document.getElementById('marginRateDisplayO').textContent = `₹${roundToTwo(marginPrice)}/${roundToTwo(manufacturingCost)} = ${roundToTwo(profitMarginRateOur)}%`;
 
                     // Update Calculation Details
                     calculationDetails.innerHTML = `<span  style="color: orange;">₹${roundToTwo(finalPrice)}</span> - <span  style="color: red;">₹${roundToTwo(amazonFees)}</span> - <span  style="color: green;">₹${roundToTwo(manufacturingCost)}</span> = ₹${roundToTwo(marginPrice)}`;
