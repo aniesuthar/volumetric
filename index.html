@@ -7,15 +7,20 @@
     <title>Calculators - MaghjiFurnishings</title>
     <link rel="stylesheet" href="styles.css">
     <meta property="og:image:secure_url" content="https://www.maghji.com/cdn/shop/files/ogImg.png?v=1740902203">
-    <link rel="shortcut icon" href="//www.maghji.com/cdn/shop/files/magh-ji-Profile.png?crop=center&height=32&v=1740255746&width=32" type="image/png">
-    <meta name="description" content="Maghji Furnishings, a brand by Bhadrecha Metalworks Co.,These calculators are developed by Maghji's tech team.">
+    <link rel="shortcut icon"
+        href="//www.maghji.com/cdn/shop/files/magh-ji-Profile.png?crop=center&height=32&v=1740255746&width=32"
+        type="image/png">
+    <meta name="description"
+        content="Maghji Furnishings, a brand by Bhadrecha Metalworks Co.,These calculators are developed by Maghji's tech team.">
     <meta property="og:site_name" content="MaghjiFurnishings Calculators">
 </head>
 
 <body>
     <a href="https://www.maghji.com/" target="_blank" title="MaghjiFurnishings">
         <div class="sf-image sf-logo-default">
-            <img src="//www.maghji.com/cdn/shop/files/maghjiLogo.svg?v=1739875470" alt="MaghjiFurnishings" srcset="//www.maghji.com/cdn/shop/files/maghjiLogo.svg?v=1739875470&amp;width=50 50w, //www.maghji.com/cdn/shop/files/maghjiLogo.svg?v=1739875470&amp;width=100 100w, //www.maghji.com/cdn/shop/files/maghjiLogo.svg?v=1739875470&amp;width=150 150w, //www.maghji.com/cdn/shop/files/maghjiLogo.svg?v=1739875470&amp;width=200 200w, //www.maghji.com/cdn/shop/files/maghjiLogo.svg?v=1739875470&amp;width=250 250w, //www.maghji.com/cdn/shop/files/maghjiLogo.svg?v=1739875470&amp;width=300 300w, //www.maghji.com/cdn/shop/files/maghjiLogo.svg?v=1739875470&amp;width=400 400w, //www.maghji.com/cdn/shop/files/maghjiLogo.svg?v=1739875470&amp;width=500 500w" width="615" height="232" class="inline-block">
+            <img src="//www.maghji.com/cdn/shop/files/maghjiLogo.svg?v=1739875470" alt="MaghjiFurnishings"
+                srcset="//www.maghji.com/cdn/shop/files/maghjiLogo.svg?v=1739875470&amp;width=50 50w, //www.maghji.com/cdn/shop/files/maghjiLogo.svg?v=1739875470&amp;width=100 100w, //www.maghji.com/cdn/shop/files/maghjiLogo.svg?v=1739875470&amp;width=150 150w, //www.maghji.com/cdn/shop/files/maghjiLogo.svg?v=1739875470&amp;width=200 200w, //www.maghji.com/cdn/shop/files/maghjiLogo.svg?v=1739875470&amp;width=250 250w, //www.maghji.com/cdn/shop/files/maghjiLogo.svg?v=1739875470&amp;width=300 300w, //www.maghji.com/cdn/shop/files/maghjiLogo.svg?v=1739875470&amp;width=400 400w, //www.maghji.com/cdn/shop/files/maghjiLogo.svg?v=1739875470&amp;width=500 500w"
+                width="615" height="232" class="inline-block">
         </div>
     </a>
     <div class="container">
@@ -60,19 +65,24 @@
             </div>
             <div class="form-group" id="manufacturingCostGroup">
                 <label for="manufacturingCost">Manufacturing & Delivery Cost (₹):</label>
-                <input type="number" id="manufacturingCost" oninput="calculatePrice()" required>
+                <input type="text" id="manufacturingCost" onblur="calculatePrice()" required>
             </div>
             <div class="form-group" id="marginRateGroup">
                 <label for="marginRate">Profit Margin Rate (%):<span class="small"> (Amazon)</span></label>
-                <input type="number" id="marginRate" oninput="calculatePrice()" required>
+                <input type="text" id="marginRate" onblur="calculatePrice()" required>
             </div>
             <div class="form-group" id="finalPriceGroup" style="display: none;">
                 <label for="finalPriceInput">Final Price (₹):</label>
-                <input type="number" id="finalPriceInput" oninput="calculatePrice()" required>
+                <input type="text" id="finalPriceInput" onblur="calculatePrice()" required>
             </div>
             <div class="form-group" id="amazonFeeGroup">
                 <label for="amazonFeeRate">Amazon Fee Rate (%): <span class="small">(15.5% for furniture)</span></label>
-                <input type="number" id="amazonFeeRate" oninput="calculatePrice()" required>
+                <input type="text" id="amazonFeeRate" value="15.5" onblur="calculatePrice()" required>
+            </div>
+            <div id="shippingTabs" style="margin-bottom: 10px;">
+                <button onclick="selectShipping('easyShip')" class="tab active">Easy Ship</button>
+                <button onclick="selectShipping('easyShipPrime')" class="tab">Easy Ship Prime</button>
+                <button onclick="selectShipping('selfShip')" class="tab">Self Ship</button>
             </div>
             <div class="group">
                 <div class="form-group">
@@ -121,6 +131,10 @@
             min-height: 100vh;
             margin: 0;
             align-content: center;
+        }
+
+        * {
+            outline-offset: 2px;
         }
 
         .container {
@@ -188,7 +202,8 @@
             font-weight: 600;
         }
 
-        #finalPrice, #marginRateDisplay {
+        #finalPrice,
+        #marginRateDisplay {
             color: orange;
         }
 
@@ -196,7 +211,8 @@
             color: #b22222;
         }
 
-        #marginPrice, #marginRateDisplayO {
+        #marginPrice,
+        #marginRateDisplayO {
             color: green;
         }
 
@@ -204,13 +220,34 @@
             font-size: 12px;
             font-weight: 300;
         }
-        .sf-image img{
+
+        .sf-image img {
             width: 120px;
             height: auto;
         }
-        a{
+
+        a {
             display: block;
             text-align: left;
+        }
+
+        .expressionResult {
+            text-align: left;
+            font-size: 11px;
+        }
+
+        .tab {
+            padding: 8px 16px;
+            margin-right: 5px;
+            cursor: pointer;
+            border: 1px solid #aaa;
+            border-radius: 4px;
+            background-color: #f5f5f5;
+        }
+
+        .tab.active {
+            background-color: #ddd;
+            font-weight: bold;
         }
 
         @media only screen and (max-width: 768px) {
@@ -223,12 +260,141 @@
             h1 {
                 font-size: 24px
             }
+
             h2 {
                 font-size: 20px
             }
         }
     </style>
     <script>
+
+        function parseInput(input) {
+            // Allow only numbers, operators, and one dot per number.
+            // Do not allow multiple dots in one number but allow decimals in rates
+            const sanitized = input.replace(/[^0-9+\-*/().]/g, '');  // Remove anything not a number, operator, or dot
+
+            // To allow only one dot per number (handle decimal points)
+            const finalInput = sanitized.replace(/(\.\d*)(?=\.)/g, "");
+
+            // If last character is an operator or the input is empty, return raw input
+            const lastChar = finalInput.charAt(finalInput.length - 1);
+            if (['+', '-', '*', '/'].includes(lastChar) || finalInput === '') {
+                return input; // Don't evaluate incomplete or invalid expressions
+            }
+
+            try {
+                // If the field is a rate (marginRate, amazonFeeRate), ensure decimal is allowed
+                if (input.includes('.')) {
+                    return parseFloat(finalInput);  // Allow decimals in rates (marginRate, amazonFeeRate)
+                }
+
+                const result = eval(finalInput);  // Evaluate the sanitized expression
+
+                return isNaN(result) ? input : result;  // Return the result if valid, else raw input
+            } catch (e) {
+                return input;  // In case of an error, return raw input
+            }
+        }
+
+
+        function addArrowsForInput() {
+            const inputs = document.querySelectorAll('input[type="text"]');
+
+            inputs.forEach(input => {
+                input.addEventListener('keydown', (event) => {
+                    if (event.key === 'ArrowUp') {
+                        event.preventDefault(); // Prevent default increment behavior
+
+                        // Get the current value
+                        let currentValue = input.value.trim();
+                        currentValue = parseInput(currentValue);
+                        currentValue += 1; // Increase by 1 (or change this to any custom increment)
+
+                        input.value = currentValue; // Update the input value
+                        input.dispatchEvent(new Event('input')); // Trigger input event to recalculate
+                    }
+
+                    if (event.key === 'ArrowDown') {
+                        event.preventDefault(); // Prevent default decrement behavior
+
+                        // Get the current value
+                        let currentValue = input.value.trim();
+                        currentValue = parseInput(currentValue);
+                        currentValue -= 1; // Decrease by 1 (or change this to any custom increment)
+
+                        input.value = currentValue; // Update the input value
+                        input.dispatchEvent(new Event('input')); // Trigger input event to recalculate
+                    }
+                });
+            });
+        }
+
+
+        function autoEvaluateInputs() {
+            const inputIds = ['manufacturingCost', 'marginRate', 'finalPriceInput', 'amazonFeeRate'];
+            let hasError = false; // Flag to track if there are any errors
+
+            inputIds.forEach(id => {
+                const el = document.getElementById(id);
+
+                if (el && el.value.trim()) {
+                    const value = el.value.trim();
+                    const evaluated = parseInput(value); // Parse the input
+
+                    // Find or create an expression div below the input field
+                    let expressionDisplay = document.getElementById(`${id}Expression`);
+                    if (!expressionDisplay) {
+                        // If it doesn't exist, create a new div below the input field
+                        expressionDisplay = document.createElement('div');
+                        expressionDisplay.className = `expressionResult`;
+                        expressionDisplay.id = `${id}Expression`; // Assign a unique ID
+                        el.parentElement.appendChild(expressionDisplay); // Append below input field
+                    }
+
+                    // If it's an expression, show the calculation below
+                    if (/[+\-*/()]/.test(value)) {  // Check if the input contains an operator
+                        expressionDisplay.textContent = `${value} = ₹${evaluated}`;  // Show the expression and result
+                    } else {
+                        expressionDisplay.textContent = ''; // Hide expression for direct numbers
+                    }
+
+                    el.value = evaluated;  // Update input field with the calculated result
+
+                    // Error handling for marginRate: Check if marginRate is greater than 100
+                    if ((id === 'marginRate' || id == 'amazonFeeRate') && parseFloat(evaluated) > 100) {
+                        // el.style.border = '2px solid red'; // Apply red border for error
+                        el.style.outline = '2px solid red'; // Apply red border for error
+                        hasError = true;
+                    } else {
+                        el.style.outline = ''; // Remove error border
+                    }
+                }
+            });
+
+            // Show global error message if any field has an error
+            const errorDisplay = document.getElementById('errorDisplay');
+            if (hasError) {
+                errorDisplay.textContent = 'Error: Margin rate cannot exceed 100%.';
+            } else {
+                errorDisplay.textContent = ''; // Clear error message
+            }
+        }
+
+
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const ids = ['manufacturingCost', 'marginRate', 'finalPriceInput', 'amazonFeeRate'];
+            ids.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.addEventListener('blur', () => {
+                        el.value = parseInput(el.value.trim());
+                    });
+                }
+            });
+        });
+
+
         function calculate() {
             const length = document.getElementById('length').value;
             const breadth = document.getElementById('breadth').value;
@@ -360,14 +526,72 @@
             }
             calculatePrice(); // Reset calculated values
         }
-        function calculatePrice() {
-            const inputType = document.getElementById('inputType').value;
-            const manufacturingCost = parseFloat(document.getElementById('manufacturingCost').value) || 0;
-            const marginRateInput = parseFloat(document.getElementById('marginRate').value) || 0;
-            const finalPriceInput = parseFloat(document.getElementById('finalPriceInput').value) || 0;
-            const amazonFeeRate = parseFloat(document.getElementById('amazonFeeRate').value) || 0;
 
-            const fixedClosingFee = 61; // Fixed closing fee
+        let selectedShippingMethod = 'easyShip'; // default
+
+        function selectShipping(method) {
+            selectedShippingMethod = method;
+
+            // Highlight selected tab
+            const buttons = document.querySelectorAll('#shippingTabs .tab');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            const clicked = Array.from(buttons).find(btn => btn.textContent.replace(/\s/g, '').toLowerCase().includes(method.toLowerCase()));
+            if (clicked) clicked.classList.add('active');
+
+            calculatePrice();
+        }
+        function getFixedFeeFromSlab(method, finalPrice) {
+            const slabs = {
+                easyShip: [
+                    { max: 300, fee: 5 },
+                    { max: 500, fee: 10 },
+                    { max: 1000, fee: 33 },
+                    { max: Infinity, fee: 64 }
+                ],
+                easyShipPrime: [
+                    { max: 300, fee: 5 },
+                    { max: 500, fee: 10 },
+                    { max: 1000, fee: 33 },
+                    { max: Infinity, fee: 64 }
+                ],
+                selfShip: [
+                    { max: 300, fee: 45 },
+                    { max: 500, fee: 35 },
+                    { max: 1000, fee: 50 },
+                    { max: Infinity, fee: 100 }
+                ]
+            };
+
+            const shipSlabs = slabs[method] || slabs.easyShip;
+
+            for (let slab of shipSlabs) {
+                if (finalPrice <= slab.max) return slab.fee;
+            }
+
+            return 0;
+        }
+
+
+
+        function calculatePrice() {
+
+            autoEvaluateInputs();
+
+            // const inputType = document.getElementById('inputType').value;
+            // const manufacturingCost = parseFloat(document.getElementById('manufacturingCost').value) || 0;
+            // const marginRateInput = parseFloat(document.getElementById('marginRate').value) || 0;
+            // const finalPriceInput = parseFloat(document.getElementById('finalPriceInput').value) || 0;
+            // const amazonFeeRate = parseFloat(document.getElementById('amazonFeeRate').value) || 0;
+            const inputType = document.getElementById('inputType').value;
+            const manufacturingCost = parseInput(document.getElementById('manufacturingCost').value);
+            const marginRateInput = parseInput(document.getElementById('marginRate').value);
+            const finalPriceInput = parseInput(document.getElementById('finalPriceInput').value);
+            const amazonFeeRate = parseInput(document.getElementById('amazonFeeRate').value);
+
+            const fixedClosingFee = getFixedFeeFromSlab(selectedShippingMethod, finalPriceInput);
+
+            // let fixedClosingFee; // Fixed closing fee
+            // const fixedClosingFee = 61; // Fixed closing fee
             const gstRate = 0.18; // GST
             const calculationDetails = document.getElementById('calculationDetails');
             const errorDisplay = document.getElementById('errorDisplay');
@@ -391,7 +615,31 @@
                 const totalPercentage = 1 - ((marginRateInput / 100) + (amazonFeeRate / 100) + (gstRate * amazonFeeRate / 100)); // Amazon Fee Rate + GST included
 
                 if (totalPercentage > 0) {
-                    const finalPrice = (manufacturingCost + fixedClosingFee + fixedClosingFee * gstRate) / totalPercentage;
+                    // const finalPrice = (manufacturingCost + fixedClosingFee + fixedClosingFee * gstRate) / totalPercentage;
+                    let finalPrice = 0;
+                    let fixedClosingFee = 0;
+                    let foundValid = false;
+
+                    // Try all slab options and see which one gives consistent result
+                    const possibleFees = selectedShippingMethod === 'selfShip' ? [45, 35, 50, 100] : [5, 10, 33, 64];
+
+                    for (let fee of possibleFees) {
+                        const trialPrice = (manufacturingCost + fee + fee * gstRate) / totalPercentage;
+                        const matchedFee = getFixedFeeFromSlab(selectedShippingMethod, trialPrice);
+
+                        if (matchedFee === fee) {
+                            finalPrice = trialPrice;
+                            fixedClosingFee = fee;
+                            foundValid = true;
+                            break;
+                        }
+                    }
+
+                    if (!foundValid) {
+                        resetFields("Could not resolve final price from manufacturing cost.");
+                        return;
+                    }
+
                     const amazonFeesWithoutGST = (finalPrice * (amazonFeeRate / 100));
                     const gstOnAmazonFees = (amazonFeesWithoutGST + fixedClosingFee) * gstRate; // Add GST
                     const amazonFees = amazonFeesWithoutGST + fixedClosingFee + gstOnAmazonFees;
@@ -446,7 +694,7 @@
 
 
 
-        </script>
+    </script>
 </body>
 
 </html>
