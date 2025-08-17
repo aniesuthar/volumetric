@@ -262,6 +262,8 @@ export function ProfitMarginCalculator() {
             value={manufacturingCost}
             onChange={(e) => setManufacturingCost(e.target.value)}
             placeholder="Enter cost"
+            inputMode="decimal"
+            pattern="[0-9+\-*/.]*"
           />
         </div>
         <div className="space-y-2">
@@ -271,6 +273,8 @@ export function ProfitMarginCalculator() {
             value={deliveryCost}
             onChange={(e) => setDeliveryCost(e.target.value)}
             placeholder="Enter cost"
+            inputMode="decimal"
+            pattern="[0-9+\-*/.]*"
           />
         </div>
       </div>
@@ -287,6 +291,8 @@ export function ProfitMarginCalculator() {
             value={marginRate}
             onChange={(e) => setMarginRate(e.target.value)}
             placeholder="Enter margin rate"
+            inputMode="decimal"
+            pattern="[0-9+\-*/.]*"
           />
         </div>
       ) : (
@@ -297,6 +303,8 @@ export function ProfitMarginCalculator() {
             value={finalPriceInput}
             onChange={(e) => setFinalPriceInput(e.target.value)}
             placeholder="Enter final price"
+            inputMode="decimal"
+            pattern="[0-9+\-*/.]*"
           />
         </div>
       )}
@@ -335,6 +343,8 @@ export function ProfitMarginCalculator() {
             id="paymentGatewayRate"
             value={paymentGatewayRate}
             onChange={(e) => setPaymentGatewayRate(e.target.value)}
+            inputMode="decimal"
+            pattern="[0-9+\-*/.]*"
           />
           <div className="flex items-center space-x-2">
             <Switch id="gatewayGst" checked={gatewayGstEnabled} onCheckedChange={setGatewayGstEnabled} />
@@ -382,14 +392,14 @@ export function ProfitMarginCalculator() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 md:grid-cols-2 gap-4 pt-4 border-t">
+              <div className="grid grid-cols-2 gap-4 pt-4 border-t">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">
                     Margin % {platform === "amazon" && "(From Amazon)"}
                   </p>
                   <Badge variant="secondary">{result.profitMarginRate.toFixed(2)}%</Badge>
                 </div>
-                <div className="col-span-2 md:col-span-2">
+                <div>
                   <p className="text-sm font-medium text-muted-foreground">Margin % (On Our Cost)</p>
                   <Badge variant="outline">{result.profitMarginRateOur.toFixed(2)}%</Badge>
                 </div>
