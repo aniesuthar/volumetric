@@ -382,14 +382,14 @@ export function ProfitMarginCalculator() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+              <div className="grid grid-cols-3 md:grid-cols-2 gap-4 pt-4 border-t">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">
                     Margin % {platform === "amazon" && "(From Amazon)"}
                   </p>
                   <Badge variant="secondary">{result.profitMarginRate.toFixed(2)}%</Badge>
                 </div>
-                <div>
+                <div className="col-span-2 md:col-span-2">
                   <p className="text-sm font-medium text-muted-foreground">Margin % (On Our Cost)</p>
                   <Badge variant="outline">{result.profitMarginRateOur.toFixed(2)}%</Badge>
                 </div>
