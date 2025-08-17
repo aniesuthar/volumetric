@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   title: "MaghjiFurnishings - Business Calculators",
   description:
     "Professional calculators for volumetric weight and profit margin calculations for furniture business operations",
-  generator: "v0.app",
+  generator: "maghji",
   manifest: "/manifest.json",
   themeColor: "#ea580c",
   viewport: "width=device-width, initial-scale=1, maximum-scale=1",
@@ -24,10 +24,10 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
-      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+      { url: "/logo.png", sizes: "192x192", type: "image/png" },
+      { url: "/logo.png", sizes: "512x512", type: "image/png" },
     ],
-    apple: [{ url: "/icon-192.png", sizes: "192x192", type: "image/png" }],
+    apple: [{ url: "/logo.png", sizes: "192x192", type: "image/png" }],
   },
 }
 
@@ -43,7 +43,7 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
         <meta name="apple-mobile-web-app-title" content="Maghji Calculators" />
         <meta name="mobile-web-app-capable" content="yes" />
-        <link rel="apple-touch-icon" href="/icon-192.png" />
+        <link rel="apple-touch-icon" href="/logo.png" />
       </head>
       <body className="font-sans">{children}</body>
     </html>

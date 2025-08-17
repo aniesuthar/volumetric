@@ -30,7 +30,7 @@ export default function HomePage() {
           <div className="p-6 border-b border-sidebar-border">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <img src="/placeholder.svg?height=40&width=40" alt="Maghji Logo" className="h-10 w-10 rounded-lg" />
+                <img src="/logo.jpg" alt="Maghji Logo" className="h-10 w-10 rounded-lg" />
                 <div>
                   <h1 className="text-lg font-bold text-sidebar-foreground">MaghjiFurnishings</h1>
                   <p className="text-xs text-sidebar-foreground/70">Business Tools</p>
