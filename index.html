@@ -56,19 +56,27 @@
 
         <div class="content">
             <h1>Profit Margin Calculator</h1>
+            <div id="platformTabs" style="margin-bottom: 20px;">
+                <button onclick="selectPlatform('amazon')" class="tab active">Amazon</button>
+                <button onclick="selectPlatform('personal')" class="tab">Personal</button>
+            </div>
             <div class="form-group">
                 <label for="inputType">Select Input Type:</label>
                 <select id="inputType" onchange="updateInputFields()">
-                    <option value="manufacturingCost">Manufacturing Cost</option>
+                    <option value="costBased">Cost-Based Calculation</option>
                     <option value="finalPrice">Final Price</option>
                 </select>
             </div>
             <div class="form-group" id="manufacturingCostGroup">
-                <label for="manufacturingCost">Manufacturing & Delivery Cost (₹):</label>
+                <label for="manufacturingCost">Manufacturing Cost (₹):</label>
                 <input type="text" id="manufacturingCost" onblur="calculatePrice()" required>
             </div>
+            <div class="form-group" id="deliveryCostGroup">
+                <label for="deliveryCost">Delivery Cost (₹):</label>
+                <input type="text" id="deliveryCost" onblur="calculatePrice()" required>
+            </div>
             <div class="form-group" id="marginRateGroup">
-                <label for="marginRate">Profit Margin Rate (%):<span class="small"> (Amazon)</span></label>
+                <label for="marginRate">Profit Margin Rate (%):<span class="small" id="marginRateLabel"> (Amazon)</span></label>
                 <input type="text" id="marginRate" onblur="calculatePrice()" required>
             </div>
             <div class="form-group" id="finalPriceGroup" style="display: none;">
@@ -78,16 +86,42 @@
             <div class="form-group" id="amazonFeeGroup">
                 <label for="amazonFeeRate">Amazon Fee Rate (%): <span class="small">(15.5% for furniture)</span></label>
                 <input type="text" id="amazonFeeRate" value="15.5" onblur="calculatePrice()" required>
+                <div class="gst-switcher">
+                    <label class="switch">
+                        <input type="checkbox" id="amazonGstToggle" onchange="calculatePrice()" checked>
+                        <span class="slider"></span>
+                    </label>
+                    <span class="small">Include 18% GST on Amazon Fees</span>
+                </div>
             </div>
-            <div id="shippingTabs" style="margin-bottom: 10px;">
+            <div class="form-group" id="paymentGatewayGroup" style="display: none;">
+                <label for="paymentGatewayRate">Payment Gateway Fee (%): <span class="small">(2-3% typical)</span></label>
+                <input type="text" id="paymentGatewayRate" value="2.5" onblur="calculatePrice()" required>
+                <div class="gst-switcher">
+                    <label class="switch">
+                        <input type="checkbox" id="gatewayGstToggle" onchange="calculatePrice()" checked>
+                        <span class="slider"></span>
+                    </label>
+                    <span class="small">Include 18% GST on Gateway Fees</span>
+                </div>
+            </div>
+            <div id="shippingTabs" style="margin-bottom: 40px;">
                 <button onclick="selectShipping('selfShip')" class="tab active">Self Ship</button>
                 <button onclick="selectShipping('easyShip')" class="tab">Easy Ship</button>
                 <button onclick="selectShipping('easyShipPrime')" class="tab">Easy Ship Prime</button>
             </div>
             <div class="group">
                 <div class="form-group">
+                    <label>Total Cost (₹):</label>
+                    <p id="totalCost">₹0.00</p>
+                </div>
+                <div class="form-group" id="amazonFeesGroup">
                     <label>Amazon Fees (₹):</label>
                     <p id="amazonFees">₹0.00</p>
+                </div>
+                <div class="form-group" id="paymentGatewayFeesGroup" style="display: none;">
+                    <label>Payment Gateway Fees (₹):</label>
+                    <p id="paymentGatewayFees">₹0.00</p>
                 </div>
             </div>
 
@@ -96,8 +130,8 @@
                     <label>Final Price (₹):</label>
                     <p id="finalPrice">₹0.00</p>
                 </div>
-                <div class="form-group">
-                    <label>Margin (%): <span class="small">(From Amazon)</span></label>
+                <div class="form-group" id="marginRateDisplayGroup">
+                    <label>Margin (%):<span class="small" id="marginRateDisplayLabel"> (From Amazon)</span></label>
                     <p id="marginRateDisplay">0.00%</p>
                 </div>
                 <div class="form-group">
@@ -105,7 +139,7 @@
                     <p id="marginPrice">₹0.00</p>
                 </div>
                 <div class="form-group">
-                    <label>Margin (%): <span class="small">(on Our Price)</span></label>
+                    <label>Margin (%):<span class="small" id="marginRateDisplayOLabel"> (on Our Cost)</span></label>
                     <p id="marginRateDisplayO">0.00%</p>
                 </div>
             </div>
@@ -164,6 +198,7 @@
             display: flex;
             justify-content: center;
             gap: 40px;
+            /*margin-top: 20px;*/
 
         }
 
@@ -216,6 +251,14 @@
             color: green;
         }
 
+        #totalCost {
+            color: #333;
+        }
+
+        #paymentGatewayFees {
+            color: #ff6b6b;
+        }
+
         .small {
             font-size: 12px;
             font-weight: 300;
@@ -248,6 +291,59 @@
         .tab.active {
             background-color: #ddd;
             font-weight: bold;
+        }
+
+        .gst-switcher {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 8px;
+            font-size: 13px;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 3px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: #4CAF50;
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(26px);
         }
 
         @media only screen and (max-width: 768px) {
@@ -331,7 +427,7 @@
 
 
         function autoEvaluateInputs() {
-            const inputIds = ['manufacturingCost', 'marginRate', 'finalPriceInput', 'amazonFeeRate'];
+            const inputIds = ['manufacturingCost', 'deliveryCost', 'marginRate', 'finalPriceInput', 'amazonFeeRate', 'paymentGatewayRate'];
             let hasError = false; // Flag to track if there are any errors
 
             inputIds.forEach(id => {
@@ -361,7 +457,7 @@
                     el.value = evaluated;  // Update input field with the calculated result
 
                     // Error handling for marginRate: Check if marginRate is greater than 100
-                    if ((id === 'marginRate' || id == 'amazonFeeRate') && parseFloat(evaluated) > 100) {
+                    if ((id === 'marginRate' || id === 'amazonFeeRate' || id === 'paymentGatewayRate') && parseFloat(evaluated) > 100) {
                         // el.style.border = '2px solid red'; // Apply red border for error
                         el.style.outline = '2px solid red'; // Apply red border for error
                         hasError = true;
@@ -374,7 +470,7 @@
             // Show global error message if any field has an error
             const errorDisplay = document.getElementById('errorDisplay');
             if (hasError) {
-                errorDisplay.textContent = 'Error: Margin rate cannot exceed 100%.';
+                errorDisplay.textContent = 'Error: Rate cannot exceed 100%.';
             } else {
                 errorDisplay.textContent = ''; // Clear error message
             }
@@ -383,7 +479,7 @@
 
 
         window.addEventListener('DOMContentLoaded', () => {
-            const ids = ['manufacturingCost', 'marginRate', 'finalPriceInput', 'amazonFeeRate'];
+            const ids = ['manufacturingCost', 'deliveryCost', 'marginRate', 'finalPriceInput', 'amazonFeeRate', 'paymentGatewayRate'];
             ids.forEach(id => {
                 const el = document.getElementById(id);
                 if (el) {
@@ -512,22 +608,68 @@
         function updateInputFields() {
             const inputType = document.getElementById('inputType').value;
             const manufacturingCostGroup = document.getElementById('manufacturingCostGroup');
+            const deliveryCostGroup = document.getElementById('deliveryCostGroup');
             const marginRateGroup = document.getElementById('marginRateGroup');
             const finalPriceGroup = document.getElementById('finalPriceGroup');
 
-            if (inputType === 'manufacturingCost') {
+            if (inputType === 'costBased') {
                 manufacturingCostGroup.style.display = 'block';
+                deliveryCostGroup.style.display = 'block';
                 marginRateGroup.style.display = 'block';
                 finalPriceGroup.style.display = 'none';
             } else {
                 manufacturingCostGroup.style.display = 'block';
+                deliveryCostGroup.style.display = 'block';
                 marginRateGroup.style.display = 'none';
                 finalPriceGroup.style.display = 'block';
             }
+            updatePlatformVisibility(); // Update platform-specific visibility
             calculatePrice(); // Reset calculated values
         }
 
         let selectedShippingMethod = 'selfShip'; // default
+        let selectedPlatform = 'amazon'; // default
+
+        function selectPlatform(platform) {
+            selectedPlatform = platform;
+
+            // Highlight selected tab
+            const buttons = document.querySelectorAll('#platformTabs .tab');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            const clicked = Array.from(buttons).find(btn => btn.textContent.toLowerCase() === platform);
+            if (clicked) clicked.classList.add('active');
+
+            updatePlatformVisibility();
+            calculatePrice();
+        }
+
+        function updatePlatformVisibility() {
+            const amazonFeeGroup = document.getElementById('amazonFeeGroup');
+            const paymentGatewayGroup = document.getElementById('paymentGatewayGroup');
+            const shippingTabs = document.getElementById('shippingTabs');
+            const amazonFeesGroup = document.getElementById('amazonFeesGroup');
+            const paymentGatewayFeesGroup = document.getElementById('paymentGatewayFeesGroup');
+            const marginRateLabel = document.getElementById('marginRateLabel');
+            const marginRateDisplayLabel = document.getElementById('marginRateDisplayLabel');
+
+            if (selectedPlatform === 'amazon') {
+                amazonFeeGroup.style.display = 'block';
+                paymentGatewayGroup.style.display = 'none';
+                shippingTabs.style.display = 'block';
+                amazonFeesGroup.style.display = 'block';
+                paymentGatewayFeesGroup.style.display = 'none';
+                marginRateLabel.textContent = ' (Amazon)';
+                marginRateDisplayLabel.textContent = ' (From Amazon)';
+            } else {
+                amazonFeeGroup.style.display = 'none';
+                paymentGatewayGroup.style.display = 'block';
+                shippingTabs.style.display = 'none';
+                amazonFeesGroup.style.display = 'none';
+                paymentGatewayFeesGroup.style.display = 'block';
+                marginRateLabel.textContent = '';
+                marginRateDisplayLabel.textContent = '';
+            }
+        }
 
         function selectShipping(method) {
             selectedShippingMethod = method;
@@ -577,21 +719,20 @@
 
             autoEvaluateInputs();
 
-            // const inputType = document.getElementById('inputType').value;
-            // const manufacturingCost = parseFloat(document.getElementById('manufacturingCost').value) || 0;
-            // const marginRateInput = parseFloat(document.getElementById('marginRate').value) || 0;
-            // const finalPriceInput = parseFloat(document.getElementById('finalPriceInput').value) || 0;
-            // const amazonFeeRate = parseFloat(document.getElementById('amazonFeeRate').value) || 0;
             const inputType = document.getElementById('inputType').value;
-            const manufacturingCost = parseInput(document.getElementById('manufacturingCost').value);
-            const marginRateInput = parseInput(document.getElementById('marginRate').value);
-            const finalPriceInput = parseInput(document.getElementById('finalPriceInput').value);
-            const amazonFeeRate = parseInput(document.getElementById('amazonFeeRate').value);
+            const manufacturingCost = parseInput(document.getElementById('manufacturingCost').value) || 0;
+            const deliveryCost = parseInput(document.getElementById('deliveryCost').value) || 0;
+            const marginRateInput = parseInput(document.getElementById('marginRate').value) || 0;
+            const finalPriceInput = parseInput(document.getElementById('finalPriceInput').value) || 0;
+            const amazonFeeRate = parseInput(document.getElementById('amazonFeeRate').value) || 0;
+            const paymentGatewayRate = parseInput(document.getElementById('paymentGatewayRate').value) || 0;
 
-            const fixedClosingFee = getFixedFeeFromSlab(selectedShippingMethod, finalPriceInput);
+            const amazonGstEnabled = document.getElementById('amazonGstToggle').checked;
+            const gatewayGstEnabled = document.getElementById('gatewayGstToggle').checked;
 
-            // let fixedClosingFee; // Fixed closing fee
-            // const fixedClosingFee = 61; // Fixed closing fee
+            const totalCost = manufacturingCost + deliveryCost;
+            const fixedClosingFee = selectedPlatform === 'amazon' ? getFixedFeeFromSlab(selectedShippingMethod, finalPriceInput) : 0;
+
             const gstRate = 0.18; // GST
             const calculationDetails = document.getElementById('calculationDetails');
             const errorDisplay = document.getElementById('errorDisplay');
@@ -599,8 +740,22 @@
             // Clear previous errors
             errorDisplay.textContent = '';
 
-            // Validate inputs
-            if (!amazonFeeRate || (!manufacturingCost && !finalPriceInput)) {
+            // Display total cost
+            document.getElementById('totalCost').textContent = `₹${manufacturingCost.toFixed(2)} + ₹${deliveryCost.toFixed(2)} = ₹${totalCost.toFixed(2)}`;
+
+            // Validate inputs based on platform
+            let validationError = false;
+            if (selectedPlatform === 'amazon') {
+                if (!amazonFeeRate || (!totalCost && !finalPriceInput)) {
+                    validationError = true;
+                }
+            } else {
+                if (!totalCost && !finalPriceInput) {
+                    validationError = true;
+                }
+            }
+
+            if (validationError) {
                 errorDisplay.textContent = "All fields are required. Please fill out all inputs.";
                 resetFields("Error");
                 return;
@@ -609,78 +764,146 @@
             // Helper function to round numbers consistently
             const roundToTwo = (num) => Math.round(num * 100) / 100;
 
-            // Calculate when input type is 'manufacturingCost'
-            if (inputType === 'manufacturingCost') {
-                // Calculate the total percentage subtracting Amazon Fee + GST + Margin
-                const totalPercentage = 1 - ((marginRateInput / 100) + (amazonFeeRate / 100) + (gstRate * amazonFeeRate / 100)); // Amazon Fee Rate + GST included
+            if (selectedPlatform === 'personal') {
+                // Personal platform calculations (with payment gateway fees)
+                if (inputType === 'costBased') {
+                    // Calculate final price based on margin rate and payment gateway fees
+                    const gatewayGstRate = gatewayGstEnabled ? gstRate : 0;
+                    const totalGatewayRate = (paymentGatewayRate / 100) * (1 + gatewayGstRate);
+                    const totalPercentage = 1 - ((marginRateInput / 100) + totalGatewayRate);
+                    
+                    if (totalPercentage > 0) {
+                        const finalPrice = totalCost / totalPercentage;
+                        const paymentGatewayFeesBase = finalPrice * (paymentGatewayRate / 100);
+                        const paymentGatewayGst = gatewayGstEnabled ? paymentGatewayFeesBase * gstRate : 0;
+                        const paymentGatewayFees = paymentGatewayFeesBase + paymentGatewayGst;
+                        const marginPrice = finalPrice - paymentGatewayFees - totalCost;
+                        const profitMarginRate = (marginPrice / finalPrice) * 100;
+                        const profitMarginRateOur = (marginPrice / totalCost) * 100;
 
-                if (totalPercentage > 0) {
-                    // const finalPrice = (manufacturingCost + fixedClosingFee + fixedClosingFee * gstRate) / totalPercentage;
-                    let finalPrice = 0;
-                    let fixedClosingFee = 0;
-                    let foundValid = false;
-
-                    // Try all slab options and see which one gives consistent result
-                    const possibleFees = selectedShippingMethod === 'selfShip' ? [45, 35, 50, 100] : [5, 10, 33, 64];
-
-                    for (let fee of possibleFees) {
-                        const trialPrice = (manufacturingCost + fee + fee * gstRate) / totalPercentage;
-                        const matchedFee = getFixedFeeFromSlab(selectedShippingMethod, trialPrice);
-
-                        if (matchedFee === fee) {
-                            finalPrice = trialPrice;
-                            fixedClosingFee = fee;
-                            foundValid = true;
-                            break;
+                        // Display values
+                        document.getElementById('finalPrice').textContent = `₹${roundToTwo(finalPrice)}`;
+                        if (gatewayGstEnabled) {
+                            document.getElementById('paymentGatewayFees').innerHTML = `₹${roundToTwo(paymentGatewayFeesBase)}<span class="small">(${paymentGatewayRate}%)</span> + ₹${roundToTwo(paymentGatewayGst)}<span class="small">(GST)</span> = ₹${roundToTwo(paymentGatewayFees)}`;
+                        } else {
+                            document.getElementById('paymentGatewayFees').textContent = `₹${roundToTwo(paymentGatewayFees)} (${paymentGatewayRate}%)`;
                         }
+                        document.getElementById('marginPrice').textContent = `₹${roundToTwo(marginPrice)}`;
+                        document.getElementById('marginRateDisplay').textContent = `${roundToTwo(profitMarginRate)}%`;
+                        document.getElementById('marginRateDisplayO').textContent = `₹${roundToTwo(marginPrice)}/${roundToTwo(totalCost)} = ${roundToTwo(profitMarginRateOur)}%`;
+
+                        // Update Calculation Details
+                        calculationDetails.innerHTML = `<span style="color: orange;">₹${roundToTwo(finalPrice)}</span> - <span style="color: #ff6b6b;">₹${roundToTwo(paymentGatewayFees)}</span> - <span style="color: green;">₹${roundToTwo(totalCost)}</span> = ₹${roundToTwo(marginPrice)}`;
+                    } else {
+                        resetFields("Invalid Input! Total percentage cannot be negative.");
                     }
-
-                    if (!foundValid) {
-                        resetFields("Could not resolve final price from manufacturing cost.");
-                        return;
-                    }
-
-                    const amazonFeesWithoutGST = (finalPrice * (amazonFeeRate / 100));
-                    const gstOnAmazonFees = (amazonFeesWithoutGST + fixedClosingFee) * gstRate; // Add GST
-                    const amazonFees = amazonFeesWithoutGST + fixedClosingFee + gstOnAmazonFees;
-
-                    const marginPrice = finalPrice - amazonFees - manufacturingCost;
-
-                    const profitMarginRate = (marginPrice / finalPrice) * 100; // Calculate margin rate correctly
-                    const profitMarginRateOur = (marginPrice / manufacturingCost) * 100; // Calculate margin rate correctly
+                } else {
+                    // Final price input mode
+                    const paymentGatewayFeesBase = finalPriceInput * (paymentGatewayRate / 100);
+                    const paymentGatewayGst = gatewayGstEnabled ? paymentGatewayFeesBase * gstRate : 0;
+                    const paymentGatewayFees = paymentGatewayFeesBase + paymentGatewayGst;
+                    const marginPrice = finalPriceInput - paymentGatewayFees - totalCost;
+                    const profitMarginRate = (marginPrice / finalPriceInput) * 100;
+                    const profitMarginRateOur = (marginPrice / totalCost) * 100;
 
                     // Display values
-                    document.getElementById('finalPrice').textContent = `₹${roundToTwo(finalPrice)}`;
-                    document.getElementById('amazonFees').innerHTML = `₹${roundToTwo(amazonFeesWithoutGST)}<span class="small">(${amazonFeeRate}%)</span> + ₹${fixedClosingFee}<span class="small">(Fix)</span> + ₹${roundToTwo((gstOnAmazonFees))}<span class="small">(Tax)</span> = ₹${roundToTwo(amazonFees)}`;
+                    document.getElementById('finalPrice').textContent = `₹${roundToTwo(finalPriceInput)}`;
+                    if (gatewayGstEnabled) {
+                        document.getElementById('paymentGatewayFees').innerHTML = `₹${roundToTwo(paymentGatewayFeesBase)}<span class="small">(${paymentGatewayRate}%)</span> + ₹${roundToTwo(paymentGatewayGst)}<span class="small">(GST)</span> = ₹${roundToTwo(paymentGatewayFees)}`;
+                    } else {
+                        document.getElementById('paymentGatewayFees').textContent = `₹${roundToTwo(paymentGatewayFees)} (${paymentGatewayRate}%)`;
+                    }
                     document.getElementById('marginPrice').textContent = `₹${roundToTwo(marginPrice)}`;
                     document.getElementById('marginRateDisplay').textContent = `${roundToTwo(profitMarginRate)}%`;
-                    document.getElementById('marginRateDisplayO').textContent = `₹${roundToTwo(marginPrice)}/${roundToTwo(manufacturingCost)} = ${roundToTwo(profitMarginRateOur)}%`;
+                    document.getElementById('marginRateDisplayO').textContent = `${roundToTwo(profitMarginRateOur)}%`;
 
                     // Update Calculation Details
-                    calculationDetails.innerHTML = `<span  style="color: orange;">₹${roundToTwo(finalPrice)}</span> - <span  style="color: red;">₹${roundToTwo(amazonFees)}</span> - <span  style="color: green;">₹${roundToTwo(manufacturingCost)}</span> = ₹${roundToTwo(marginPrice)}`;
-                } else {
-                    resetFields("Invalid Input!");
+                    calculationDetails.innerHTML = `<span style="color: orange;">₹${roundToTwo(finalPriceInput)}</span> - <span style="color: #ff6b6b;">₹${roundToTwo(paymentGatewayFees)}</span> - <span style="color: green;">₹${roundToTwo(totalCost)}</span> = ₹${roundToTwo(marginPrice)}`;
                 }
-            }
-            // Calculate when input type is 'finalPrice'
-            else if (inputType === 'finalPrice') {
-                const amazonFeesWithoutGST = (amazonFeeRate / 100) * finalPriceInput;
-                const amazonFees = amazonFeesWithoutGST + fixedClosingFee + (amazonFeesWithoutGST + fixedClosingFee) * gstRate; // Add GST
-                const marginPrice = finalPriceInput - amazonFees - manufacturingCost;
+            } else {
+                // Amazon platform calculations (existing logic)
+                // Calculate when input type is 'costBased'
+                if (inputType === 'costBased') {
+                    // Calculate the total percentage subtracting Amazon Fee + GST + Margin
+                    const amazonGstRate = amazonGstEnabled ? gstRate : 0;
+                    const totalPercentage = 1 - ((marginRateInput / 100) + (amazonFeeRate / 100) + (amazonGstRate * amazonFeeRate / 100)); // Amazon Fee Rate + GST included
 
-                // Correct Margin Rate Calculation
-                const profitMarginRate = (marginPrice / finalPriceInput) * 100; // Ensures consistency
-                const profitMarginRateOur = (marginPrice / manufacturingCost) * 100; // Ensures consistency
+                    if (totalPercentage > 0) {
+                        let finalPrice = 0;
+                        let fixedClosingFee = 0;
+                        let foundValid = false;
 
-                // Display values
-                document.getElementById('finalPrice').textContent = `₹${roundToTwo(finalPriceInput)}`;
-                document.getElementById('amazonFees').textContent = `₹${roundToTwo(amazonFeesWithoutGST)}(${amazonFeeRate}%) + ₹${fixedClosingFee}(Fix) + ₹${roundToTwo((amazonFees - amazonFeesWithoutGST - fixedClosingFee))}(Tax) = ₹${roundToTwo(amazonFees)}`;
-                document.getElementById('marginPrice').textContent = `₹${roundToTwo(marginPrice)}`;
-                document.getElementById('marginRateDisplay').textContent = `${roundToTwo(profitMarginRate)}%`;
-                document.getElementById('marginRateDisplayO').textContent = `${roundToTwo(profitMarginRateOur)}%`;
+                        // Try all slab options and see which one gives consistent result
+                        const possibleFees = selectedShippingMethod === 'selfShip' ? [45, 35, 50, 100] : [5, 10, 33, 64];
 
-                // Update Calculation Details
-                calculationDetails.innerHTML = `<span  style="color: orange;">₹${roundToTwo(finalPriceInput)}</span> - <span  style="color: red;">₹${roundToTwo(amazonFees)}</span> - <span  style="color: green;">₹${roundToTwo(manufacturingCost)}</span> = ₹${roundToTwo(marginPrice)}`;
+                        for (let fee of possibleFees) {
+                            const trialPrice = (totalCost + fee + (amazonGstEnabled ? fee * gstRate : 0)) / totalPercentage;
+                            const matchedFee = getFixedFeeFromSlab(selectedShippingMethod, trialPrice);
+
+                            if (matchedFee === fee) {
+                                finalPrice = trialPrice;
+                                fixedClosingFee = fee;
+                                foundValid = true;
+                                break;
+                            }
+                        }
+
+                        if (!foundValid) {
+                            resetFields("Could not resolve final price from total cost.");
+                            return;
+                        }
+
+                        const amazonFeesWithoutGST = (finalPrice * (amazonFeeRate / 100));
+                        const gstOnAmazonFees = amazonGstEnabled ? (amazonFeesWithoutGST + fixedClosingFee) * gstRate : 0; // Add GST conditionally
+                        const amazonFees = amazonFeesWithoutGST + fixedClosingFee + gstOnAmazonFees;
+
+                        const marginPrice = finalPrice - amazonFees - totalCost;
+
+                        const profitMarginRate = (marginPrice / finalPrice) * 100; // Calculate margin rate correctly
+                        const profitMarginRateOur = (marginPrice / totalCost) * 100; // Calculate margin rate correctly
+
+                        // Display values
+                        document.getElementById('finalPrice').textContent = `₹${roundToTwo(finalPrice)}`;
+                        if (amazonGstEnabled) {
+                            document.getElementById('amazonFees').innerHTML = `₹${roundToTwo(amazonFeesWithoutGST)}<span class="small">(${amazonFeeRate}%)</span> + ₹${fixedClosingFee}<span class="small">(Fix)</span> + ₹${roundToTwo((gstOnAmazonFees))}<span class="small">(GST)</span> = ₹${roundToTwo(amazonFees)}`;
+                        } else {
+                            document.getElementById('amazonFees').innerHTML = `₹${roundToTwo(amazonFeesWithoutGST)}<span class="small">(${amazonFeeRate}%)</span> + ₹${fixedClosingFee}<span class="small">(Fix)</span> = ₹${roundToTwo(amazonFees)}`;
+                        }
+                        document.getElementById('marginPrice').textContent = `₹${roundToTwo(marginPrice)}`;
+                        document.getElementById('marginRateDisplay').textContent = `${roundToTwo(profitMarginRate)}%`;
+                        document.getElementById('marginRateDisplayO').textContent = `₹${roundToTwo(marginPrice)}/${roundToTwo(totalCost)} = ${roundToTwo(profitMarginRateOur)}%`;
+
+                        // Update Calculation Details
+                        calculationDetails.innerHTML = `<span  style="color: orange;">₹${roundToTwo(finalPrice)}</span> - <span  style="color: red;">₹${roundToTwo(amazonFees)}</span> - <span  style="color: green;">₹${roundToTwo(totalCost)}</span> = ₹${roundToTwo(marginPrice)}`;
+                    } else {
+                        resetFields("Invalid Input!");
+                    }
+                }
+                // Calculate when input type is 'finalPrice'
+                else if (inputType === 'finalPrice') {
+                    const amazonFeesWithoutGST = (amazonFeeRate / 100) * finalPriceInput;
+                    const gstOnAmazonFees = amazonGstEnabled ? (amazonFeesWithoutGST + fixedClosingFee) * gstRate : 0;
+                    const amazonFees = amazonFeesWithoutGST + fixedClosingFee + gstOnAmazonFees; // Add GST conditionally
+                    const marginPrice = finalPriceInput - amazonFees - totalCost;
+
+                    // Correct Margin Rate Calculation
+                    const profitMarginRate = (marginPrice / finalPriceInput) * 100; // Ensures consistency
+                    const profitMarginRateOur = (marginPrice / totalCost) * 100; // Ensures consistency
+
+                    // Display values
+                    document.getElementById('finalPrice').textContent = `₹${roundToTwo(finalPriceInput)}`;
+                    if (amazonGstEnabled) {
+                        document.getElementById('amazonFees').innerHTML = `₹${roundToTwo(amazonFeesWithoutGST)}<span class="small">(${amazonFeeRate}%)</span> + ₹${fixedClosingFee}<span class="small">(Fix)</span> + ₹${roundToTwo(gstOnAmazonFees)}<span class="small">(GST)</span> = ₹${roundToTwo(amazonFees)}`;
+                    } else {
+                        document.getElementById('amazonFees').innerHTML = `₹${roundToTwo(amazonFeesWithoutGST)}<span class="small">(${amazonFeeRate}%)</span> + ₹${fixedClosingFee}<span class="small">(Fix)</span> = ₹${roundToTwo(amazonFees)}`;
+                    }
+                    document.getElementById('marginPrice').textContent = `₹${roundToTwo(marginPrice)}`;
+                    document.getElementById('marginRateDisplay').textContent = `${roundToTwo(profitMarginRate)}%`;
+                    document.getElementById('marginRateDisplayO').textContent = `${roundToTwo(profitMarginRateOur)}%`;
+
+                    // Update Calculation Details
+                    calculationDetails.innerHTML = `<span  style="color: orange;">₹${roundToTwo(finalPriceInput)}</span> - <span  style="color: red;">₹${roundToTwo(amazonFees)}</span> - <span  style="color: green;">₹${roundToTwo(totalCost)}</span> = ₹${roundToTwo(marginPrice)}`;
+                }
             }
         }
 
