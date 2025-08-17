@@ -21,7 +21,7 @@ interface CalculationResult {
 
 export function ProfitMarginCalculator() {
   const [platform, setPlatform] = useState("amazon")
-  const [inputType, setInputType] = useState("costBased")
+  const [inputType, setInputType] = useState("finalPrice")
   const [shippingMethod, setShippingMethod] = useState("selfShip")
 
   const [manufacturingCost, setManufacturingCost] = useState("")

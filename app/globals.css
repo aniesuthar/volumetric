@@ -21,7 +21,7 @@
   --destructive: oklch(0.577 0.245 27.325); /* #be123c - Red for errors */
   --destructive-foreground: oklch(1 0 0); /* #ffffff - White text on destructive */
   --border: oklch(0.922 0.013 106.423); /* #e2e8f0 - Light gray borders */
-  --input: oklch(94.007% 0.00011 271.152); /* #fafafa - Light gray input background */
+  --input: oklch(91.887% 0.0001 271.152); /* #fafafa - Light gray input background */
   --ring: oklch(0.646 0.222 41.116); /* #ea580c - Orange focus ring */
   --chart-1: oklch(0.646 0.222 41.116); /* #ea580c - Orange for charts */
   --chart-2: oklch(0.828 0.189 84.429); /* #f59e0b - Amber for charts */

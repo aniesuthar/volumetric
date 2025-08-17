@@ -53,7 +53,7 @@ export default function HomePage() {
             <div className="space-y-2">
               <Button
                 variant={activeCalculator === "volumetric" ? "default" : "ghost"}
-                className="w-full justify-start gap-3 text-sidebar-foreground"
+                className="w-full justify-start gap-3"
                 onClick={() => {
                   setActiveCalculator("volumetric")
                   setSidebarOpen(false)
@@ -64,7 +64,7 @@ export default function HomePage() {
               </Button>
               <Button
                 variant={activeCalculator === "profit" ? "default" : "ghost"}
-                className="w-full justify-start gap-3 text-sidebar-foreground"
+                className="w-full justify-start gap-3"
                 onClick={() => {
                   setActiveCalculator("profit")
                   setSidebarOpen(false)
@@ -121,7 +121,7 @@ export default function HomePage() {
         {/* Calculator Content */}
         <main className="flex-1 p-2 lg:p-6">
           <Card className="h-full">
-            <CardContent className="px-4">
+            <CardContent className="px-4 max-w-4xl">
               {activeCalculator === "volumetric" ? <VolumetricWeightCalculator /> : <ProfitMarginCalculator />}
             </CardContent>
           </Card>

@@ -70,7 +70,7 @@ export function VolumetricWeightCalculator() {
   }
 
   useEffect(() => {
-    if (length && breadth && height && weight) {
+    if (length && breadth && height) {
       let lengthCm, breadthCm, heightCm
 
       if (unit === "inches") {
@@ -100,7 +100,7 @@ export function VolumetricWeightCalculator() {
 
   return (
     <div className="space-y-4">
-      <div className="grid md:grid-cols-2 gap-4">
+      <div className="grid gap-4">
         <div className="space-y-2">
           <Label htmlFor="unit">Unit</Label>
           <Select value={unit} onValueChange={setUnit}>
