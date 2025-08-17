@@ -99,7 +99,7 @@ export function VolumetricWeightCalculator() {
   }, [length, breadth, height, weight, unit])
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 max-w-2xl">
       <div className="grid gap-4">
         <div className="space-y-2">
           <Label htmlFor="unit">Unit</Label>
