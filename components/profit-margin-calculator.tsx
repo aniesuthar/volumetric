@@ -353,7 +353,7 @@ export function ProfitMarginCalculator() {
         <Card className="bg-muted/50">
           <CardContent className="pt-6">
             <div className="space-y-4">
-              <div className="grid md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Total Cost</p>
                   <p className="text-lg font-bold">₹{result.totalCost.toFixed(2)}</p>
@@ -364,7 +364,7 @@ export function ProfitMarginCalculator() {
                 </div>
               </div>
 
-              <div className="grid md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 {platform === "amazon" ? (
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Amazon Fees</p>
@@ -382,7 +382,7 @@ export function ProfitMarginCalculator() {
                 </div>
               </div>
 
-              <div className="grid md:grid-cols-2 gap-4 pt-4 border-t">
+              <div className="grid grid-cols-2 gap-4 pt-4 border-t">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">
                     Margin % {platform === "amazon" && "(From Amazon)"}
