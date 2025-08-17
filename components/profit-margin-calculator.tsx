@@ -17,6 +17,11 @@ interface CalculationResult {
   marginPrice: number
   profitMarginRate: number
   profitMarginRateOur: number
+  amazonFeesBreakdown?: {
+    percentageFee: number
+    fixedFee: number
+    gstOnFees: number
+  }
 }
 
 export function ProfitMarginCalculator() {
@@ -188,6 +193,11 @@ export function ProfitMarginCalculator() {
             marginPrice: roundToTwo(marginPrice),
             profitMarginRate: roundToTwo((marginPrice / finalPrice) * 100),
             profitMarginRateOur: roundToTwo((marginPrice / totalCost) * 100),
+            amazonFeesBreakdown: {
+              percentageFee: roundToTwo(amazonFeesWithoutGST),
+              fixedFee: fixedClosingFee,
+              gstOnFees: roundToTwo(gstOnAmazonFees),
+            },
           })
         } else {
           const finalPrice = parseInput(finalPriceInput)
@@ -205,6 +215,11 @@ export function ProfitMarginCalculator() {
             marginPrice: roundToTwo(marginPrice),
             profitMarginRate: roundToTwo((marginPrice / finalPrice) * 100),
             profitMarginRateOur: roundToTwo((marginPrice / totalCost) * 100),
+            amazonFeesBreakdown: {
+              percentageFee: roundToTwo(amazonFeesWithoutGST),
+              fixedFee: fixedClosingFee,
+              gstOnFees: roundToTwo(gstOnAmazonFees),
+            },
           })
         }
       }
@@ -367,7 +382,7 @@ export function ProfitMarginCalculator() {
       {/* Results */}
       {result && (
         <Card className="bg-muted/50">
-          <CardContent className="pt-6">
+          <CardContent>
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
@@ -380,10 +395,19 @@ export function ProfitMarginCalculator() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className={`grid ${platform === "amazon" ? "md:grid-cols-2" : "grid-cols-2"} gap-4`}>
                 {platform === "amazon" ? (
                   <div>
-                    <p className="text-sm font-medium text-muted-foreground">Amazon Fees</p>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Amazon Fees
+                      {result && result.amazonFeesBreakdown && (
+                        <div className="text-xs text-muted-foreground mt-1">
+                          ₹{result.amazonFeesBreakdown.percentageFee.toFixed(2)} (Rate) + ₹
+                          {result.amazonFeesBreakdown.fixedFee} (Fixed) + ₹{result.amazonFeesBreakdown.gstOnFees.toFixed(2)}{" "}
+                          (GST)
+                        </div>
+                      )}
+                    </p>
                     <p className="text-lg font-bold text-destructive">₹{result.amazonFees.toFixed(2)}</p>
                   </div>
                 ) : (
@@ -398,16 +422,16 @@ export function ProfitMarginCalculator() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 pt-4 border-t">
+              <div className="grid md:grid-cols-2 gap-4 pt-4 border-t">
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">
-                    Margin % {platform === "amazon" && "(From Amazon)"}
+                    Margin % (on Sale Price)
                   </p>
-                  <Badge variant="secondary">{result.profitMarginRate.toFixed(2)}%</Badge>
+                  <Badge variant="outline">{result.profitMarginRate.toFixed(2)}%</Badge>
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Margin % (On Our Cost)</p>
-                  <Badge variant="outline">{result.profitMarginRateOur.toFixed(2)}%</Badge>
+                  <p className="text-sm font-medium text-muted-foreground">Margin % (on Factory Price)</p>
+                  <Badge variant="outline" >{result.profitMarginRateOur.toFixed(2)}%</Badge>
                 </div>
               </div>
 
