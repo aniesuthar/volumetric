@@ -258,22 +258,24 @@ export function ProfitMarginCalculator() {
         <div className="space-y-2">
           <Label htmlFor="manufacturingCost">Manufacturing Cost (₹)</Label>
           <Input
+            type="tel"
             id="manufacturingCost"
             value={manufacturingCost}
             onChange={(e) => setManufacturingCost(e.target.value)}
             placeholder="Enter cost"
-            inputMode="decimal"
+            inputMode="text"
             pattern="[0-9+\-*/.]*"
           />
         </div>
         <div className="space-y-2">
           <Label htmlFor="deliveryCost">Delivery Cost (₹)</Label>
           <Input
+            type="tel"
             id="deliveryCost"
             value={deliveryCost}
             onChange={(e) => setDeliveryCost(e.target.value)}
             placeholder="Enter cost"
-            inputMode="decimal"
+            inputMode="text"
             pattern="[0-9+\-*/.]*"
           />
         </div>
@@ -287,11 +289,12 @@ export function ProfitMarginCalculator() {
             {platform === "amazon" && <span className="text-xs text-muted-foreground">(Amazon)</span>}
           </Label>
           <Input
+            type="tel"
             id="marginRate"
             value={marginRate}
             onChange={(e) => setMarginRate(e.target.value)}
             placeholder="Enter margin rate"
-            inputMode="decimal"
+            inputMode="text"
             pattern="[0-9+\-*/.]*"
           />
         </div>
@@ -299,11 +302,12 @@ export function ProfitMarginCalculator() {
         <div className="space-y-2">
           <Label htmlFor="finalPriceInput">Final Price (₹)</Label>
           <Input
+            type="tel"
             id="finalPriceInput"
             value={finalPriceInput}
             onChange={(e) => setFinalPriceInput(e.target.value)}
             placeholder="Enter final price"
-            inputMode="decimal"
+            inputMode="text"
             pattern="[0-9+\-*/.]*"
           />
         </div>
@@ -316,7 +320,8 @@ export function ProfitMarginCalculator() {
             <Label htmlFor="amazonFeeRate">
               Amazon Fee Rate (%) <span className="text-xs text-muted-foreground">(15.5% for furniture)</span>
             </Label>
-            <Input id="amazonFeeRate" value={amazonFeeRate} onChange={(e) => setAmazonFeeRate(e.target.value)} />
+            <Input
+              type="tel" id="amazonFeeRate" value={amazonFeeRate} onChange={(e) => setAmazonFeeRate(e.target.value)} />
             <div className="flex items-center space-x-2">
               <Switch id="amazonGst" checked={amazonGstEnabled} onCheckedChange={setAmazonGstEnabled} />
               <Label htmlFor="amazonGst" className="text-sm">
@@ -340,10 +345,11 @@ export function ProfitMarginCalculator() {
             Payment Gateway Fee (%) <span className="text-xs text-muted-foreground">(2-3% typical)</span>
           </Label>
           <Input
+            type="tel"
             id="paymentGatewayRate"
             value={paymentGatewayRate}
             onChange={(e) => setPaymentGatewayRate(e.target.value)}
-            inputMode="decimal"
+            inputMode="text"
             pattern="[0-9+\-*/.]*"
           />
           <div className="flex items-center space-x-2">
