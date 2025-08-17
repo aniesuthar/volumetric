@@ -99,12 +99,12 @@ export function VolumetricWeightCalculator() {
   }, [length, breadth, height, weight, unit])
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-2 gap-4">
+    <div className="space-y-4">
+      <div className="grid md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="unit">Unit</Label>
           <Select value={unit} onValueChange={setUnit}>
-            <SelectTrigger>
+            <SelectTrigger className="w-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -115,7 +115,7 @@ export function VolumetricWeightCalculator() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="length">
             Length
@@ -146,7 +146,7 @@ export function VolumetricWeightCalculator() {
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label htmlFor="height">
             Height

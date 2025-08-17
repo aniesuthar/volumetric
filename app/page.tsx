@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Calculator, Package, TrendingUp, ExternalLink, Menu, X } from "lucide-react"
 import { VolumetricWeightCalculator } from "@/components/volumetric-weight-calculator"
 import { ProfitMarginCalculator } from "@/components/profit-margin-calculator"
+import { InstallPrompt } from "@/components/install-prompt"
 
 export default function HomePage() {
   const [activeCalculator, setActiveCalculator] = useState<"volumetric" | "profit">("volumetric")
@@ -27,7 +28,7 @@ export default function HomePage() {
       >
         <div className="flex flex-col h-full">
           {/* Sidebar Header */}
-          <div className="p-6 border-b border-sidebar-border">
+          <div className="md:p-6 border-b border-sidebar-border">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <img src="/logo.jpg" alt="Maghji Logo" className="h-10 w-10 rounded-lg" />
@@ -92,7 +93,7 @@ export default function HomePage() {
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col relative">
         {/* Header */}
         <header className="border-b bg-card px-4 py-4 lg:px-6">
           <div className="flex items-center justify-between">
@@ -101,9 +102,9 @@ export default function HomePage() {
                 <Menu className="h-5 w-5" />
               </Button>
               <div className="flex items-center gap-2">
-                <Calculator className="h-6 w-6 text-primary" />
+                <Calculator className="hidden md:inline-block h-6 w-6 text-primary" />
                 <div>
-                  <h2 className="text-xl font-bold text-foreground">
+                  <h2 className="text-lg lg:text-xl font-bold text-foreground">
                     {activeCalculator === "volumetric" ? "Volumetric Weight Calculator" : "Profit Margin Calculator"}
                   </h2>
                   <p className="text-sm text-muted-foreground">
@@ -118,13 +119,15 @@ export default function HomePage() {
         </header>
 
         {/* Calculator Content */}
-        <main className="flex-1 p-4 lg:p-6">
+        <main className="flex-1 p-2 lg:p-6">
           <Card className="h-full">
-            <CardContent className="p-6">
+            <CardContent className="px-4">
               {activeCalculator === "volumetric" ? <VolumetricWeightCalculator /> : <ProfitMarginCalculator />}
             </CardContent>
           </Card>
         </main>
+
+        <InstallPrompt />
       </div>
     </div>
   )
