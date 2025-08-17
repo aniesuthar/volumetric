@@ -304,13 +304,11 @@ export function ProfitMarginCalculator() {
             {platform === "amazon" && <span className="text-xs text-muted-foreground">(Amazon)</span>}
           </Label>
           <Input
-            type="tel"
+            type="number"
             id="marginRate"
             value={marginRate}
             onChange={(e) => setMarginRate(e.target.value)}
             placeholder="Enter margin rate"
-            inputMode="text"
-            pattern="[0-9+\-*/.]*"
           />
         </div>
       ) : (
@@ -336,7 +334,7 @@ export function ProfitMarginCalculator() {
               Amazon Fee Rate (%) <span className="text-xs text-muted-foreground">(15.5% for furniture)</span>
             </Label>
             <Input
-              type="tel" id="amazonFeeRate" value={amazonFeeRate} onChange={(e) => setAmazonFeeRate(e.target.value)} />
+              type="number" id="amazonFeeRate" value={amazonFeeRate} onChange={(e) => setAmazonFeeRate(e.target.value)} />
             <div className="flex items-center space-x-2">
               <Switch id="amazonGst" checked={amazonGstEnabled} onCheckedChange={setAmazonGstEnabled} />
               <Label htmlFor="amazonGst" className="text-sm">
@@ -360,12 +358,10 @@ export function ProfitMarginCalculator() {
             Payment Gateway Fee (%) <span className="text-xs text-muted-foreground">(2-3% typical)</span>
           </Label>
           <Input
-            type="tel"
+            type="number"
             id="paymentGatewayRate"
             value={paymentGatewayRate}
             onChange={(e) => setPaymentGatewayRate(e.target.value)}
-            inputMode="text"
-            pattern="[0-9+\-*/.]*"
           />
           <div className="flex items-center space-x-2">
             <Switch id="gatewayGst" checked={gatewayGstEnabled} onCheckedChange={setGatewayGstEnabled} />
