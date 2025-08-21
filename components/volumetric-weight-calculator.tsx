@@ -118,6 +118,8 @@ export function VolumetricWeightCalculator() {
   }
 
   const fetchShippingRates = async () => {
+    setRatesError("")
+
     if (!length || !breadth || !height || !weight || !pickupPincode || !destinationPincode || !invoiceAmount) {
       return
     }
@@ -135,7 +137,7 @@ export function VolumetricWeightCalculator() {
 
 
     setIsLoadingRates(true)
-    setRatesError("")
+
 
     try {
       let lengthCm, breadthCm, heightCm
@@ -570,7 +572,7 @@ export function VolumetricWeightCalculator() {
               </CardContent>
             </Card>
             <div className="flex justify-end">
-              
+
               <div className="flex gap-2">
                 <Button
                   variant="outline"
