@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Textarea } from "@/components/ui/textarea"
 import { Loader2, Settings, Save, ContrastIcon as Compare, Trash2, RefreshCw, MapPin } from "lucide-react"
 import { Switch } from "@/components/ui/switch"
+import { cn } from "@/lib/utils"
 
 interface CourierRate {
   courier_partner_id: number
@@ -147,9 +148,9 @@ export function VolumetricWeightCalculator() {
         breadthCm = Math.round(Number.parseFloat(breadth) * conversionFactor)
         heightCm = Math.round(Number.parseFloat(height) * conversionFactor)
       } else {
-        lengthCm = Number.parseFloat(length)
-        breadthCm = Number.parseFloat(breadth)
-        heightCm = Number.parseFloat(height)
+        lengthCm = Math.round(Number.parseFloat(length))
+        breadthCm = Math.round(Number.parseFloat(breadth))
+        heightCm = Math.round(Number.parseFloat(height))
       }
 
       const payload = {
@@ -169,6 +170,9 @@ export function VolumetricWeightCalculator() {
             box_count: 1,
           },
         ],
+        ...(paymentType === "COD" && {
+          shipment_collectable_amount: Number.parseInt(codCollectableAmount),
+        }),
       }
 
       const response = await fetch("https://appapinew.bigship.in/api/RateCalculate/user", {
@@ -262,6 +266,7 @@ export function VolumetricWeightCalculator() {
   const [pickupPincode, setPickupPincode] = useState("331803")
   const [destinationPincode, setDestinationPincode] = useState("400001")
   const [invoiceAmount, setInvoiceAmount] = useState("800")
+  const [codCollectableAmount, setCodCollectableAmount] = useState("");
   const [pickupDetails, setPickupDetails] = useState<PincodeDetails | null>(null)
   const [destinationDetails, setDestinationDetails] = useState<PincodeDetails | null>(null)
   const [isValidatingPickup, setIsValidatingPickup] = useState(false)
@@ -358,8 +363,15 @@ export function VolumetricWeightCalculator() {
         pickupDetails &&
         destinationDetails
       ) {
-        console.log("[v0] Auto-refreshing rates due to input change")
-        fetchShippingRates()
+        if (paymentType === "COD") {
+          if (codCollectableAmount) {
+            console.log("[v0] Auto-refreshing rates due to input change (COD)")
+            fetchShippingRates()
+          }
+        } else {
+          console.log("[v0] Auto-refreshing rates due to input change (Prepaid)")
+          fetchShippingRates()
+        }
       }
     }, 1000) // 1 second debounce
 
@@ -377,6 +389,7 @@ export function VolumetricWeightCalculator() {
     shipmentCategory,
     pickupDetails,
     destinationDetails,
+    codCollectableAmount
   ])
 
   useEffect(() => {
@@ -614,9 +627,12 @@ export function VolumetricWeightCalculator() {
                                 {dim.usedWeight.toFixed(2)}kg
                               </Badge>
                             </div>
-                            <div className="text-xs text-muted-foreground">
+                            <div className="text-xs ">
                               {dim.bestRate &&
-                                `Best Rate: ₹${dim.bestRate.total_shipping_charges} (${dim.bestRate.courier_name})`}
+                                <p>
+                                  Best Ship. Price: <span className="text-sm text-chart-4 font-medium"> ₹{dim.bestRate.total_shipping_charges} </span> ({dim.bestRate.courier_name})
+                                </p>
+                              }
                             </div>
                           </div>
                           <div className="flex gap-2">
@@ -644,7 +660,7 @@ export function VolumetricWeightCalculator() {
           <div className="space-y-6">
             <div className="flex justify-between items-center">
               <div>
-                <h3 className="text-xl font-semibold text-chart-4">Live Shipping Rates</h3>
+                <h3 className="text-xl font-semibold text-chart-4">BigShip Shipping Rates</h3>
                 <p className="text-sm text-muted-foreground">
                   Get real-time shipping costs from various courier partners
                 </p>
@@ -744,7 +760,7 @@ export function VolumetricWeightCalculator() {
                       </Select>
                     </div>
                   </div>
-                  <div className="grid grid-cols-1 2xl:grid-cols-3 gap-4">
+                  <div className={cn("grid grid-cols-1 lg:grid-cols-2 gap-4", paymentType == "COD" ? "2xl:grid-cols-4" : "2xl:grid-cols-3")}>
                     <div className="space-y-2">
                       <Label htmlFor="pickup-pincode">
                         Pickup Pincode
@@ -813,6 +829,20 @@ export function VolumetricWeightCalculator() {
                         placeholder="800"
                       />
                     </div>
+                    {paymentType == "COD" &&
+                      <div className="space-y-2">
+                        <Label htmlFor="invoice-amount">Collectable Amount (₹)</Label>
+                        <Input
+                          id="collectable-amount"
+                          type="number"
+                          inputMode="text"
+                          pattern="[0-9+\-*/.]*"
+                          value={codCollectableAmount}
+                          onChange={(e) => setCodCollectableAmount(e.target.value)}
+                          placeholder="Amount to collect"
+                        />
+                      </div>
+                    }
                   </div>
                   <VolumetricUsed length={length} breadth={breadth} height={height} unit={unit} usedWeight={usedWeight} />
                 </div>
@@ -857,7 +887,7 @@ export function VolumetricWeightCalculator() {
                   {isLoadingRates && (
                     <div className="flex items-center justify-center py-8 bg-chart-4/10 rounded-lg">
                       <Loader2 className="w-6 h-6 animate-spin mr-2 text-chart-4" />
-                      <span className="text-chart-4">Fetching live shipping rates...</span>
+                      <span className="text-chart-4">Fetching shipping rates...</span>
                     </div>
                   )}
 
@@ -872,7 +902,7 @@ export function VolumetricWeightCalculator() {
                       {courierRates.slice(0, 10).map((rate, index) => (
                         <div
                           key={index}
-                          className={`grid grid-cols-4 gap-2 p-3 rounded-lg border items-center transition-colors hover:bg-chart-4/10 bg-white border-gray-200 
+                          className={`grid grid-cols-2 lg:grid-cols-4 gap-2 p-3 rounded-lg border items-center transition-colors hover:bg-chart-4/10 bg-white border-gray-200 
                               ${index === 0 && "border-chart-4/50"}
                             `}
                         >
@@ -883,8 +913,10 @@ export function VolumetricWeightCalculator() {
                             </Badge>
                           </div>
                           <div>
-                            <div className="text-sm">Zone {rate.zone}</div>
-                            <div className="text-xs text-muted-foreground">{rate.tat} days</div>
+                            <div className="hidden lg:block">
+                              <div className="text-sm">Zone {rate.zone}</div>
+                              <div className="text-xs text-muted-foreground">{rate.tat} days</div>
+                            </div>
                           </div>
                           <div>
                             <div className="text-sm font-medium">{rate.weight.applied_weight}kg</div>
@@ -897,7 +929,7 @@ export function VolumetricWeightCalculator() {
                               ₹{rate.total_shipping_charges}
                             </div>
                             {rate.cod_charge > 0 && (
-                              <div className="text-xs text-muted-foreground">+ ₹{rate.cod_charge} COD</div>
+                              <div className="text-xs text-muted-foreground">(₹{rate.freight_charge} + {rate.cod_charge} COD)</div>
                             )}
                             {index === 0 && (
                               <Badge variant="default" className="text-xs mt-1 bg-chart-4 hover:bg-chart-4">
@@ -941,9 +973,9 @@ function VolumetricUsed({ length, height, breadth, unit, conversionFactor = 2.54
     breadthCm = Math.round(Number.parseFloat(breadth) * conversionFactor)
     heightCm = Math.round(Number.parseFloat(height) * conversionFactor)
   } else {
-    lengthCm = Number.parseFloat(length)
-    breadthCm = Number.parseFloat(breadth)
-    heightCm = Number.parseFloat(height)
+    lengthCm = Math.round(Number.parseFloat(length))
+    breadthCm = Math.round(Number.parseFloat(breadth))
+    heightCm = Math.round(Number.parseFloat(height))
   }
 
   const useDWeight = lengthCm * heightCm * breadthCm / 5000;
@@ -951,7 +983,7 @@ function VolumetricUsed({ length, height, breadth, unit, conversionFactor = 2.54
   if (lengthCm && heightCm && breadthCm) {
     return (
       <div className="text-sm">
-        <b>Volumetric Used:</b> {lengthCm} x {breadthCm} x {heightCm} = {unit == "inches" ? useDWeight.toFixed(2) : usedWeight}Kg
+        <b>Volumetric Used:</b> {lengthCm} x {breadthCm} x {heightCm} = {useDWeight.toFixed(2)}Kg
       </div>
     )
   }
