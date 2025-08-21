@@ -119,7 +119,8 @@ export function VolumetricWeightCalculator() {
   }
 
   const fetchShippingRates = async () => {
-    setRatesError("")
+    setRatesError("");
+    setCourierRates([]);
 
     if (!length || !breadth || !height || !weight || !pickupPincode || !destinationPincode || !invoiceAmount) {
       return
