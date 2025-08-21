@@ -121,7 +121,7 @@ export default function HomePage() {
         {/* Calculator Content */}
         <main className="flex-1 p-2 lg:p-6">
           <Card className="h-full">
-            <CardContent className="px-4">
+            <CardContent>
               {activeCalculator === "volumetric" ? <VolumetricWeightCalculator /> : <ProfitMarginCalculator />}
             </CardContent>
           </Card>
