@@ -71,7 +71,7 @@ export function VolumetricWeightCalculator() {
   const [breadth, setBreadth] = useState("")
   const [height, setHeight] = useState("")
   const [weight, setWeight] = useState("")
-  const [convertValues, setConvertValues] = useState(true)
+  const [convertValues, setConvertValues] = useState(false)
   const [volumetricWeight, setVolumetricWeight] = useState(0)
   const [usedWeight, setUsedWeight] = useState(0)
   const [courierRates, setCourierRates] = useState<CourierRate[]>([])
@@ -204,7 +204,7 @@ export function VolumetricWeightCalculator() {
   }
 
   const saveCurrentDimension = () => {
-    if (!length || !breadth || !height || !weight) return
+    if (!length || !breadth || !height) return
 
     const nextLetter = String.fromCharCode(65 + savedDimensions.length) // A, B, C, etc.
 
@@ -586,7 +586,7 @@ export function VolumetricWeightCalculator() {
                 <Button
                   variant="outline"
                   size="sm"
-                  disabled={!length || !breadth || !height || !weight}
+                  disabled={!length || !breadth || !height}
                   onClick={saveCurrentDimension}
                 >
                   <Save className="w-4 h-4 mr-2" />
@@ -814,7 +814,9 @@ export function VolumetricWeightCalculator() {
                       />
                     </div>
                   </div>
+                  <VolumetricUsed length={length} breadth={breadth} height={height} unit={unit} usedWeight={usedWeight} />
                 </div>
+
               </CardContent>
             </Card>
 
@@ -921,4 +923,36 @@ export function VolumetricWeightCalculator() {
       </div>
     </div>
   )
+}
+
+interface VolProps {
+  length: string
+  height: string,
+  breadth: string,
+  unit: string,
+  conversionFactor?: number
+  usedWeight: number
+}
+function VolumetricUsed({ length, height, breadth, unit, conversionFactor = 2.54, usedWeight }: VolProps) {
+  let lengthCm, breadthCm, heightCm;
+
+  if (unit === "inches") {
+    lengthCm = Math.round(Number.parseFloat(length) * conversionFactor)
+    breadthCm = Math.round(Number.parseFloat(breadth) * conversionFactor)
+    heightCm = Math.round(Number.parseFloat(height) * conversionFactor)
+  } else {
+    lengthCm = Number.parseFloat(length)
+    breadthCm = Number.parseFloat(breadth)
+    heightCm = Number.parseFloat(height)
+  }
+
+  const useDWeight = lengthCm * heightCm * breadthCm / 5000;
+
+  if (lengthCm && heightCm && breadthCm) {
+    return (
+      <div className="text-sm">
+        <b>Volumetric Used:</b> {lengthCm} x {breadthCm} x {heightCm} = {unit == "inches" ? useDWeight.toFixed(2) : usedWeight}Kg
+      </div>
+    )
+  }
 }
