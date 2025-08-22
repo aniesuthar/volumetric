@@ -525,38 +525,52 @@ export function ProfitMarginCalculator() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Total Cost</p>
-                    <p className="text-lg font-bold">₹{result.totalCost.toFixed(2)}</p>
+                    <p className="price">₹{result.totalCost.toFixed(2)}</p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Final Price</p>
-                    <p className="text-lg font-bold text-chart-1">₹{result.finalPrice.toFixed(2)}</p>
+                    <p className="price text-chart-1">₹{result.finalPrice.toFixed(2)}</p>
                   </div>
                 </div>
 
                 <div className={`grid ${platform === "amazon" ? "md:grid-cols-2" : "grid-cols-2"} gap-4`}>
                   {platform === "amazon" ? (
-                    <div>
-                      <p className="text-sm font-medium text-muted-foreground">
-                        Amazon Fees
-                        {result && result.amazonFeesBreakdown && (
-                          <div className="text-xs text-muted-foreground mt-1">
-                            ₹{result.amazonFeesBreakdown.percentageFee.toFixed(2)} (Rate) + ₹
-                            {result.amazonFeesBreakdown.fixedFee} (Fixed) + ₹
-                            {result.amazonFeesBreakdown.gstOnFees.toFixed(2)} (GST)
-                          </div>
-                        )}
-                      </p>
-                      <p className="text-lg font-bold text-destructive">₹{result.amazonFees.toFixed(2)}</p>
-                    </div>
+                    <>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">
+                          Amazon Fees
+                          {result && result.amazonFeesBreakdown && (
+                            <div className="text-xs text-muted-foreground/60 mt-1">
+                              ₹{result.amazonFeesBreakdown.percentageFee.toFixed(2)} (Rate) + ₹
+                              {result.amazonFeesBreakdown.fixedFee} (Fixed) + ₹
+                              {result.amazonFeesBreakdown.gstOnFees.toFixed(2)} (GST)
+                            </div>
+                          )}
+                        </p>
+                        <p className="price text-destructive">₹{result.amazonFees.toFixed(2)}</p>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground">
+                          Amazon Receivable
+                          {result && result.amazonFeesBreakdown && (
+                            <div className="text-xs text-muted-foreground/60 mt-1">
+                              ₹{result.finalPrice.toFixed(2)} - ₹
+                              {result.amazonFees}
+                            </div>
+                          )}
+                        </p>
+                        <p className="price text-yellow-600">₹{(result.finalPrice - result.amazonFees).toFixed(2)}</p>
+                      </div>
+                    </>
                   ) : (
                     <div>
                       <p className="text-sm font-medium text-muted-foreground">Gateway Fees</p>
-                      <p className="text-lg font-bold text-destructive">₹{result.paymentGatewayFees.toFixed(2)}</p>
+                      <p className="price text-destructive">₹{result.paymentGatewayFees.toFixed(2)}</p>
                     </div>
                   )}
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">Pure Profit</p>
-                    <p className="text-lg font-bold text-chart-4">₹{result.marginPrice.toFixed(2)}</p>
+                    <p className="price text-chart-4">₹{result.marginPrice.toFixed(2)}</p>
                   </div>
                 </div>
 
@@ -606,42 +620,42 @@ export function ProfitMarginCalculator() {
                 <TableBody>
                   <TableRow>
                     <TableCell className="font-medium">Final Price</TableCell>
-                    <TableCell>₹{comparison.amazon.finalPrice.toFixed(2)}</TableCell>
-                    <TableCell>₹{comparison.personal.finalPrice.toFixed(2)}</TableCell>
-                    <TableCell>
-                        ₹{Math.abs(comparison.amazon.finalPrice - comparison.personal.finalPrice).toFixed(2)}
+                    <TableCell className="font-gilroy font-medium">₹{comparison.amazon.finalPrice.toFixed(2)}</TableCell>
+                    <TableCell className="font-gilroy font-medium">₹{comparison.personal.finalPrice.toFixed(2)}</TableCell>
+                    <TableCell className="font-gilroy font-medium">
+                      ₹{Math.abs(comparison.amazon.finalPrice - comparison.personal.finalPrice).toFixed(2)}
                     </TableCell>
                   </TableRow>
                   <TableRow>
                     <TableCell className="font-medium">Platform Fees</TableCell>
-                    <TableCell>₹{comparison.amazon.amazonFees.toFixed(2)}</TableCell>
-                    <TableCell>₹{comparison.personal.paymentGatewayFees.toFixed(2)}</TableCell>
-                    <TableCell>
-                        ₹{Math.abs(comparison.amazon.amazonFees - comparison.personal.paymentGatewayFees).toFixed(2)}
-                      </TableCell>
+                    <TableCell className="font-gilroy font-medium">₹{comparison.amazon.amazonFees.toFixed(2)}</TableCell>
+                    <TableCell className="font-gilroy font-medium">₹{comparison.personal.paymentGatewayFees.toFixed(2)}</TableCell>
+                    <TableCell className="font-gilroy font-medium">
+                      ₹{Math.abs(comparison.amazon.amazonFees - comparison.personal.paymentGatewayFees).toFixed(2)}
+                    </TableCell>
                   </TableRow>
                   <TableRow>
                     <TableCell className="font-medium">Pure Profit</TableCell>
-                    <TableCell>₹{comparison.amazon.marginPrice.toFixed(2)}</TableCell>
-                    <TableCell>₹{comparison.personal.marginPrice.toFixed(2)}</TableCell>
-                    <TableCell>
-                        ₹{Math.abs(comparison.amazon.marginPrice - comparison.personal.marginPrice).toFixed(2)}
-                      </TableCell>
+                    <TableCell className="font-gilroy font-medium">₹{comparison.amazon.marginPrice.toFixed(2)}</TableCell>
+                    <TableCell className="font-gilroy font-medium">₹{comparison.personal.marginPrice.toFixed(2)}</TableCell>
+                    <TableCell className="font-gilroy font-medium">
+                      ₹{Math.abs(comparison.amazon.marginPrice - comparison.personal.marginPrice).toFixed(2)}
+                    </TableCell>
                   </TableRow>
                   <TableRow>
                     <TableCell className="font-medium">Margin % (Sale Price)</TableCell>
-                    <TableCell>{comparison.amazon.profitMarginRate.toFixed(2)}%</TableCell>
-                    <TableCell>{comparison.personal.profitMarginRate.toFixed(2)}%</TableCell>
-                    <TableCell>
-                        {Math.abs(comparison.amazon.profitMarginRate - comparison.personal.profitMarginRate).toFixed(2)}%
+                    <TableCell className="font-gilroy font-medium">{comparison.amazon.profitMarginRate.toFixed(2)}%</TableCell>
+                    <TableCell className="font-gilroy font-medium">{comparison.personal.profitMarginRate.toFixed(2)}%</TableCell>
+                    <TableCell className="font-gilroy font-medium">
+                      {Math.abs(comparison.amazon.profitMarginRate - comparison.personal.profitMarginRate).toFixed(2)}%
                     </TableCell>
                   </TableRow>
                   <TableRow>
                     <TableCell className="font-medium">Margin % (Factory Price)</TableCell>
-                    <TableCell>{comparison.amazon.profitMarginRateOur.toFixed(2)}%</TableCell>
-                    <TableCell>{comparison.personal.profitMarginRateOur.toFixed(2)}%</TableCell>
-                    <TableCell>
-                        {Math.abs(comparison.amazon.profitMarginRateOur - comparison.personal.profitMarginRateOur).toFixed(2)}%
+                    <TableCell className="font-gilroy font-medium">{comparison.amazon.profitMarginRateOur.toFixed(2)}%</TableCell>
+                    <TableCell className="font-gilroy font-medium">{comparison.personal.profitMarginRateOur.toFixed(2)}%</TableCell>
+                    <TableCell className="font-gilroy font-medium">
+                      {Math.abs(comparison.amazon.profitMarginRateOur - comparison.personal.profitMarginRateOur).toFixed(2)}%
                     </TableCell>
                   </TableRow>
                 </TableBody>
@@ -655,13 +669,13 @@ export function ProfitMarginCalculator() {
               <div className="space-y-3 text-muted-foreground">
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium ">Optimal Personal Price:</span>
-                  <span className="text-lg font-bold text-chart-4">
+                  <span className="price text-chart-4">
                     ₹{comparison.optimalPersonalPrice.toFixed(2)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium ">Price Reduction:</span>
-                  <span className="text-lg font-bold">₹{comparison.priceDifference.toFixed(2)}</span>
+                  <span className="price">₹{comparison.priceDifference.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium ">Customer Savings:</span>

@@ -926,11 +926,11 @@ export function VolumetricWeightCalculator() {
                             </div>
                           </div>
                           <div className="text-right">
-                            <div className={`text-lg font-bold ${index === 0 ? "text-chart-4" : "text-chart-4"}`}>
+                            <div className={`price ${index === 0 ? "text-chart-4" : "text-chart-4"}`}>
                               ₹{rate.total_shipping_charges}
                             </div>
                             {rate.cod_charge > 0 && (
-                              <div className="text-xs text-muted-foreground">(₹{rate.freight_charge} + {rate.cod_charge} COD)</div>
+                              <div className="font-gilroy font-semibold text-xs text-muted-foreground">(₹{rate.freight_charge} + {rate.cod_charge} COD)</div>
                             )}
                             {index === 0 && (
                               <Badge variant="default" className="text-xs mt-1 bg-chart-4 hover:bg-chart-4">

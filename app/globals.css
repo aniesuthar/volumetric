@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@tailwind utilities;
 
 @custom-variant dark (&:is(.dark *));
 
@@ -113,6 +114,7 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   --font-sans: var(--font-dm-sans);
+  --font-gilroy: var(--font-gilroy);
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
@@ -122,6 +124,8 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-family: var(--font-sans);
+  }
+  .price {
+    @apply font-gilroy text-xl font-extrabold;
   }
 }
