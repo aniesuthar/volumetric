@@ -16,6 +16,13 @@ export default function SignOutPage() {
     const signOut = async () => {
       try {
         const supabase = getSupabaseBrowserClient()
+
+        if (!supabase) {
+          setError("Failed to initialize Supabase client")
+          setIsSigningOut(false)
+          return
+        }
+
         const { error } = await supabase.auth.signOut()
 
         if (error) {

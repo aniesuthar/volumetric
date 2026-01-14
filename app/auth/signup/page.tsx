@@ -40,6 +40,11 @@ export default function SignUpPage() {
     try {
       const supabase = getSupabaseBrowserClient()
 
+      if (!supabase) {
+        setError('Failed to initialize Supabase client')
+        return
+      }
+
       const { error } = await supabase.auth.signUp({
         email,
         password
@@ -61,6 +66,9 @@ export default function SignUpPage() {
     // Check if user is already signed in
     const checkUser = async () => {
       const supabase = getSupabaseBrowserClient()
+
+      if (!supabase) return
+
       const { data: { user } } = await supabase.auth.getUser()
 
       if (user) {
