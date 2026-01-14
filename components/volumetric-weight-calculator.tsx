@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Textarea } from "@/components/ui/textarea"
-import { Loader2, Settings, Save, ContrastIcon as Compare, Trash2, RefreshCw, MapPin } from "lucide-react"
+import { Loader2, Settings, Save, ContrastIcon as Compare, Trash2, RefreshCw, MapPin, LogIn, AlertCircle } from "lucide-react"
 import { Switch } from "@/components/ui/switch"
 import { cn } from "@/lib/utils"
 
@@ -86,6 +86,9 @@ export function VolumetricWeightCalculator() {
   const [compareMode, setCompareMode] = useState(true)
   const [paymentType, setPaymentType] = useState("Prepaid")
   const [shipmentCategory, setShipmentCategory] = useState("B2C")
+  const [isLoginPopupOpen, setIsLoginPopupOpen] = useState(false)
+  const [loginStatus, setLoginStatus] = useState<"idle" | "loading" | "success" | "error">("idle")
+  const [loginError, setLoginError] = useState("")
 
   const conversionFactor = 2.54
 
@@ -262,6 +265,49 @@ export function VolumetricWeightCalculator() {
     localStorage.setItem("bigship_auth_token", authToken)
     localStorage.setItem("bigship_user_id", userId)
     setIsSettingsOpen(false)
+  }
+
+  const handleBigShipLogin = () => {
+    setLoginStatus("loading")
+    setLoginError("")
+
+    // Open BigShip login in popup
+    const width = 500
+    const height = 700
+    const left = window.screen.width / 2 - width / 2
+    const top = window.screen.height / 2 - height / 2
+
+    const popup = window.open(
+      "https://app.bigship.in/authentication/login",
+      "BigShipLogin",
+      `width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes`
+    )
+
+    if (!popup) {
+      setLoginStatus("error")
+      setLoginError("Popup blocked. Please allow popups for this site.")
+      return
+    }
+
+    // Poll popup for closure
+    const pollTimer = setInterval(() => {
+      try {
+        // Check if popup is closed
+        if (!popup || popup.closed) {
+          clearInterval(pollTimer)
+          setLoginStatus("idle")
+          setLoginError("Login completed! Check your BigShip account and copy your credentials below.")
+          return
+        }
+      } catch (e) {
+        // Cross-origin errors are expected, ignore
+      }
+    }, 500)
+
+    // Set timeout to stop polling after 10 minutes
+    setTimeout(() => {
+      clearInterval(pollTimer)
+    }, 600000)
   }
 
   const [pickupPincode, setPickupPincode] = useState("331803")
@@ -678,6 +724,62 @@ export function VolumetricWeightCalculator() {
                     <DialogTitle>BigShip API Credentials</DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4">
+                    {/* Auto-Login Section */}
+                    <div className="space-y-2">
+                      <p className="text-sm text-muted-foreground">Quickest way: Login to BigShip to auto-fill credentials</p>
+                      <Button
+                        onClick={handleBigShipLogin}
+                        disabled={loginStatus === "loading"}
+                        className="w-full bg-blue-600 hover:bg-blue-700"
+                      >
+                        {loginStatus === "loading" ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Logging in...
+                          </>
+                        ) : (
+                          <>
+                            <LogIn className="w-4 h-4 mr-2" />
+                            Login to BigShip
+                          </>
+                        )}
+                      </Button>
+                    </div>
+
+                    {/* Status Messages */}
+                    {loginStatus === "idle" && loginError && (
+                      <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                        <AlertCircle className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
+                        <div className="text-sm text-blue-700">
+                          <p className="font-medium mb-1">Steps to get your credentials:</p>
+                          <ol className="list-decimal list-inside space-y-1 text-xs">
+                            <li>Open your BigShip account</li>
+                            <li>Go to Settings → API Keys</li>
+                            <li>Copy your Access Key ID and Authorization Token</li>
+                            <li>Paste them in the fields below</li>
+                          </ol>
+                        </div>
+                      </div>
+                    )}
+
+                    {loginStatus === "error" && loginError && (
+                      <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-md">
+                        <AlertCircle className="w-4 h-4 text-red-600 flex-shrink-0 mt-0.5" />
+                        <span className="text-sm text-red-700">{loginError}</span>
+                      </div>
+                    )}
+
+                    {/* Divider */}
+                    <div className="relative">
+                      <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-gray-200"></div>
+                      </div>
+                      <div className="relative flex justify-center text-xs uppercase">
+                        <span className="px-2 bg-white text-gray-500">Or enter manually</span>
+                      </div>
+                    </div>
+
+                    {/* Manual Entry Section */}
                     <div className="space-y-2">
                       <Label htmlFor="user-id">User ID</Label>
                       <Input

@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(move \"lib\\supabase\\sever.ts\" \"lib\\supabase\\server.ts\")",
+      "Bash(ren:*)",
+      "Bash(npx shadcn@latest add:*)",
+      "Bash(del \"components\\ui\\dropdown-menu.tsx\")",
+      "Bash(npm run dev:*)",
+      "Bash(npx kill-port:*)",
+      "Bash(echo $SUPABASE_SERVICE_ROLE_KEY)",
+      "Bash(npm install:*)",
+      "Bash(node:*)",
+      "Bash(del create-team-view.js)",
+      "Bash(npm uninstall:*)",
+      "Bash(dir)",
+      "Bash(dir:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

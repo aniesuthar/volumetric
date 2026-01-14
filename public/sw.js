@@ -1,5 +1,5 @@
 const CACHE_NAME = "maghji-calculators-v1"
-const urlsToCache = ["/", "/manifest.json", "/icon-192.png", "/icon-512.png"]
+const urlsToCache = ["/", "/manifest.json"]
 
 self.addEventListener("install", (event) => {
   console.log("[v0] Service Worker installing...")
