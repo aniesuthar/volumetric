@@ -27,6 +27,11 @@ export default function SignInPage() {
     try {
       const supabase = getSupabaseBrowserClient()
 
+      if (!supabase) {
+        setError('Failed to initialize Supabase client')
+        return
+      }
+
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password
@@ -55,6 +60,9 @@ export default function SignInPage() {
     // Check if user is already signed in
     const checkUser = async () => {
       const supabase = getSupabaseBrowserClient()
+
+      if (!supabase) return
+
       const { data: { user } } = await supabase.auth.getUser()
 
       if (user) {
