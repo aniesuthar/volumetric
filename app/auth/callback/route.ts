@@ -8,7 +8,7 @@ export async function GET(request: Request) {
   const origin = requestUrl.origin
 
   if (code) {
-    const cookieStore = cookies()
+    const cookieStore = await cookies()
     const supabase = createServerClient(
       process.env.SUPABASE_URL!,
       process.env.SUPABASE_ANON_KEY!,
@@ -20,12 +20,12 @@ export async function GET(request: Request) {
           set(name: string, value: string, options: any) {
             try {
               cookieStore.set({ name, value, ...options })
-            } catch {}
+            } catch { }
           },
           remove(name: string, options: any) {
             try {
               cookieStore.set({ name, value: "", ...options })
-            } catch {}
+            } catch { }
           },
         },
       }
