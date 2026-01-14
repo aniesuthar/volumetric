@@ -64,6 +64,11 @@ export default function TeamsPage() {
 
   useEffect(() => {
     const init = async () => {
+      if (!supabase) {
+        router.push("/")
+        return
+      }
+
       const {
         data: { user },
       } = await supabase.auth.getUser()
@@ -95,6 +100,8 @@ export default function TeamsPage() {
   }
 
   const loadTeamDetails = async (team: Team) => {
+    if (!supabase) return
+
     try {
       // Load members
       const membersResponse = await fetch(`/api/teams/${team.teams.id}/members`)

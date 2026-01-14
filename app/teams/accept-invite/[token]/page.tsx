@@ -27,6 +27,12 @@ export default function AcceptInvitePage({ params }: { params: Promise<{ token: 
   }, [])
 
   const checkAuth = async (inviteToken: string) => {
+    if (!supabase) {
+      alert("Failed to initialize. Please refresh the page.")
+      router.push("/")
+      return
+    }
+
     const {
       data: { user },
     } = await supabase.auth.getUser()
