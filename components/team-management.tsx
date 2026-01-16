@@ -68,6 +68,11 @@ export function TeamManagement({ teamId }: TeamManagementProps) {
     const init = async () => {
       try {
         const supabase = getSupabaseBrowserClient()
+        if (!supabase) {
+          setError("Failed to initialize")
+          setLoading(false)
+          return
+        }
 
         // Get current user
         const { data: { user }, error: userError } = await supabase.auth.getUser()
@@ -98,6 +103,8 @@ export function TeamManagement({ teamId }: TeamManagementProps) {
 
   const loadTeamDetails = async () => {
     const supabase = getSupabaseBrowserClient()
+    if (!supabase) return
+
     const { data, error } = await supabase
       .from("teams")
       .select("*")
