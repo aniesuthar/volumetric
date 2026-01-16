@@ -46,6 +46,11 @@ export function AccountDashboard() {
 
   useEffect(() => {
     const init = async () => {
+      if (!supabase) {
+        setLoading(false)
+        return
+      }
+
       const {
         data: { user },
       } = await supabase.auth.getUser()
@@ -80,6 +85,7 @@ export function AccountDashboard() {
   const loadMaterialStats = async (userId: string) => {
     try {
       const supabase = getSupabaseBrowserClient()
+      if (!supabase) return
 
       // Count personal materials
       const { count: personalCount } = await supabase
@@ -104,6 +110,7 @@ export function AccountDashboard() {
   }
 
   const handleSignOut = async () => {
+    if (!supabase) return
     await supabase.auth.signOut()
     window.location.href = "/"
   }
@@ -342,9 +349,9 @@ export function AccountDashboard() {
                             <div className="flex items-center gap-2">
                               <span className="text-sm text-muted-foreground">
                                 {team.role === "viewer" ? "View Only" :
-                                 team.role === "member" ? "Can Edit" :
-                                 team.role === "admin" ? "Full Control" :
-                                 "Owner"}
+                                  team.role === "member" ? "Can Edit" :
+                                    team.role === "admin" ? "Full Control" :
+                                      "Owner"}
                               </span>
                               <Badge variant={getRoleBadgeVariant(team.role)} className="text-xs">
                                 {team.role}
