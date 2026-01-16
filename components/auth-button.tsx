@@ -11,6 +11,10 @@ export function AuthButton() {
 
   useEffect(() => {
     const supabase = getSupabaseBrowserClient()
+    if (!supabase) {
+      setLoading(false)
+      return
+    }
 
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -31,6 +35,8 @@ export function AuthButton() {
   const handleSignIn = async () => {
     try {
       const supabase = getSupabaseBrowserClient()
+      if (!supabase) return
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
@@ -46,6 +52,8 @@ export function AuthButton() {
   const handleSignOut = async () => {
     try {
       const supabase = getSupabaseBrowserClient()
+      if (!supabase) return
+
       const { error } = await supabase.auth.signOut()
       if (error) throw error
     } catch (error) {

@@ -35,6 +35,10 @@ export function SimpleAccountDashboard() {
       try {
         console.log("Initializing account dashboard...")
         const supabase = getSupabaseBrowserClient()
+        if (!supabase) {
+          router.push("/auth/signin?redirectTo=/account")
+          return
+        }
 
         const { data: { user }, error: userError } = await supabase.auth.getUser()
         console.log("User data:", user, "Error:", userError)
@@ -124,6 +128,8 @@ export function SimpleAccountDashboard() {
   const handleSignOut = async () => {
     try {
       const supabase = getSupabaseBrowserClient()
+      if (!supabase) return
+
       await supabase.auth.signOut()
       window.location.href = "/"
     } catch (error) {

@@ -127,7 +127,7 @@ export function EstimateCalculator() {
       if (raw) {
         setMaterials(JSON.parse(raw))
       }
-    } catch {}
+    } catch { }
   }, [])
 
   useEffect(() => {
@@ -147,14 +147,14 @@ export function EstimateCalculator() {
         url.searchParams.delete("catalog")
         window.history.replaceState({}, "", url.toString())
       }
-    } catch {}
+    } catch { }
   }, [])
 
   // Persist materials
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(materials))
-    } catch {}
+    } catch { }
   }, [materials])
 
   // Load/persist presets in localStorage
@@ -162,7 +162,7 @@ export function EstimateCalculator() {
     try {
       const raw = localStorage.getItem(PRESETS_STORAGE_KEY)
       if (raw) setPresets(JSON.parse(raw) as Preset[])
-    } catch {}
+    } catch { }
   }, [])
 
   // Reload materials when team selection changes
@@ -174,7 +174,7 @@ export function EstimateCalculator() {
   useEffect(() => {
     try {
       localStorage.setItem(PRESETS_STORAGE_KEY, JSON.stringify(presets))
-    } catch {}
+    } catch { }
   }, [presets])
 
   // Auto-derive default cuts from number of lines (user can override)
@@ -188,6 +188,8 @@ export function EstimateCalculator() {
     const init = async () => {
       try {
         const supabase = getSupabaseBrowserClient()
+        if (!supabase) return
+
         const { data } = await supabase.auth.getUser()
         const uid = data.user?.id ?? null
         const email = data.user?.email ?? null
@@ -209,6 +211,8 @@ export function EstimateCalculator() {
   const handleSignIn = async () => {
     try {
       const supabase = getSupabaseBrowserClient()
+      if (!supabase) return
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email: window.prompt("Enter your email") || "",
         password: window.prompt("Enter your password") || "",
@@ -229,6 +233,8 @@ export function EstimateCalculator() {
   const handleSignUp = async () => {
     try {
       const supabase = getSupabaseBrowserClient()
+      if (!supabase) return
+
       const { data, error } = await supabase.auth.signUp({
         email: window.prompt("Enter your email") || "",
         password: window.prompt("Enter your password") || "",
@@ -249,13 +255,15 @@ export function EstimateCalculator() {
 
   const handleSignOut = async () => {
     const supabase = getSupabaseBrowserClient()
+    if (!supabase) return
+
     await supabase.auth.signOut()
     setUserId(null)
     // fall back to local materials
     try {
       const raw = localStorage.getItem(STORAGE_KEY)
       if (raw) setMaterials(JSON.parse(raw))
-    } catch {}
+    } catch { }
   }
 
   // Helper: compute weight per foot for a material
@@ -331,6 +339,8 @@ export function EstimateCalculator() {
   const loadCloudMaterials = async () => {
     try {
       const supabase = getSupabaseBrowserClient()
+      if (!supabase) return
+
       let query = supabase.from("materials").select("*").order("created_at", { ascending: false })
 
       // Filter by team if selected, otherwise load personal materials
@@ -384,6 +394,11 @@ export function EstimateCalculator() {
     if (userId) {
       try {
         const supabase = getSupabaseBrowserClient()
+        if (!supabase) {
+          setMaterials((prev) => [newMat, ...prev])
+          return
+        }
+
         const { error } = await supabase.from("materials").insert({
           user_id: userId,
           team_id: selectedTeamId,
@@ -421,6 +436,11 @@ export function EstimateCalculator() {
     if (userId) {
       try {
         const supabase = getSupabaseBrowserClient()
+        if (!supabase) {
+          setMaterials((prev) => prev.filter((m) => m.id !== id))
+          return
+        }
+
         const { error } = await supabase.from("materials").delete().eq("id", id)
         if (error) throw error
         await loadCloudMaterials()
@@ -654,71 +674,71 @@ export function EstimateCalculator() {
 
           {/* Add Material - Only show if user has create permission */}
           {permissions.canCreate ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            <div className="col-span-2 md:col-span-1">
-              <Label className="mb-1 block">Type</Label>
-              <Select
-                value={materialDraft.type}
-                onValueChange={(v: Material["type"]) => setMaterialDraft((d) => ({ ...d, type: v }))}
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Sariya">Sariya</SelectItem>
-                  <SelectItem value="Pati">Pati</SelectItem>
-                  <SelectItem value="Sheet">Sheet</SelectItem>
-                  <SelectItem value="Pipe">Pipe</SelectItem>
-                  <SelectItem value="Other">Other</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <div className="col-span-2 md:col-span-1">
+                <Label className="mb-1 block">Type</Label>
+                <Select
+                  value={materialDraft.type}
+                  onValueChange={(v: Material["type"]) => setMaterialDraft((d) => ({ ...d, type: v }))}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Sariya">Sariya</SelectItem>
+                    <SelectItem value="Pati">Pati</SelectItem>
+                    <SelectItem value="Sheet">Sheet</SelectItem>
+                    <SelectItem value="Pipe">Pipe</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="col-span-2">
+                <Label className="mb-1 block">Name / Spec</Label>
+                <Input
+                  placeholder="e.g. 1&quot; Pipe (Light)"
+                  value={materialDraft.name}
+                  onChange={(e) => setMaterialDraft((d) => ({ ...d, name: e.target.value }))}
+                />
+              </div>
+              <div>
+                <Label className="mb-1 block">Base Length (ft)</Label>
+                <Input
+                  type="number"
+                  inputMode="numeric"
+                  value={materialDraft.baseLengthFt}
+                  onChange={(e) => setMaterialDraft((d) => ({ ...d, baseLengthFt: Number(e.target.value || 0) }))}
+                />
+              </div>
+              <div>
+                <Label className="mb-1 block">Weight @ Base (kg)</Label>
+                <Input
+                  type="number"
+                  inputMode="decimal"
+                  value={materialDraft.weightAtBaseLengthKg}
+                  onChange={(e) => setMaterialDraft((d) => ({ ...d, weightAtBaseLengthKg: Number(e.target.value || 0) }))}
+                />
+              </div>
+              <div>
+                <Label className="mb-1 block">Price per kg (₹)</Label>
+                <Input
+                  type="number"
+                  inputMode="decimal"
+                  value={materialDraft.pricePerKg}
+                  onChange={(e) => setMaterialDraft((d) => ({ ...d, pricePerKg: Number(e.target.value || 0) }))}
+                />
+              </div>
+              <div className="col-span-2 md:col-span-3">
+                <Button
+                  onClick={addMaterial}
+                  className="w-full"
+                  disabled={!permissions.canCreate}
+                >
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Material
+                </Button>
+              </div>
             </div>
-            <div className="col-span-2">
-              <Label className="mb-1 block">Name / Spec</Label>
-              <Input
-                placeholder="e.g. 1&quot; Pipe (Light)"
-                value={materialDraft.name}
-                onChange={(e) => setMaterialDraft((d) => ({ ...d, name: e.target.value }))}
-              />
-            </div>
-            <div>
-              <Label className="mb-1 block">Base Length (ft)</Label>
-              <Input
-                type="number"
-                inputMode="numeric"
-                value={materialDraft.baseLengthFt}
-                onChange={(e) => setMaterialDraft((d) => ({ ...d, baseLengthFt: Number(e.target.value || 0) }))}
-              />
-            </div>
-            <div>
-              <Label className="mb-1 block">Weight @ Base (kg)</Label>
-              <Input
-                type="number"
-                inputMode="decimal"
-                value={materialDraft.weightAtBaseLengthKg}
-                onChange={(e) => setMaterialDraft((d) => ({ ...d, weightAtBaseLengthKg: Number(e.target.value || 0) }))}
-              />
-            </div>
-            <div>
-              <Label className="mb-1 block">Price per kg (₹)</Label>
-              <Input
-                type="number"
-                inputMode="decimal"
-                value={materialDraft.pricePerKg}
-                onChange={(e) => setMaterialDraft((d) => ({ ...d, pricePerKg: Number(e.target.value || 0) }))}
-              />
-            </div>
-            <div className="col-span-2 md:col-span-3">
-              <Button
-                onClick={addMaterial}
-                className="w-full"
-                disabled={!permissions.canCreate}
-              >
-                <Save className="h-4 w-4 mr-2" />
-                Save Material
-              </Button>
-            </div>
-          </div>
           ) : (
             <div className="text-center py-4 text-muted-foreground">
               <Badge variant="secondary" className="mb-2">View Only Mode</Badge>
