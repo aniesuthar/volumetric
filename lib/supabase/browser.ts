@@ -15,6 +15,6 @@ export function getSupabaseBrowserClient() {
   if (!url || !anon) {
     console.warn("[v0] Supabase env is missing: NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_ANON_KEY")
   }
-  browserClient = createBrowserClient(url || "", anon || "")
+  browserClient = createBrowserClient<{ id: string;[key: string]: any }, "public">(url || "", anon || "")
   return browserClient
 }
