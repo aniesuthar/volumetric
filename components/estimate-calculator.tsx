@@ -11,16 +11,18 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { Trash2, Plus, Save } from "lucide-react"
+import { Trash2, Plus, Save, Info, Loader2 } from "lucide-react"
 
 type Material = {
   id: string
-  type: "Sariya" | "Pati" | "Sheet" | "Pipe" | "Other"
+  type: "Sariya" | "Pati" | "Sheet" | "Pipe" | "Fabric" | "Foam" | "Ply" | "Wood" | "Other"
   name: string
-  baseLengthFt: number // usually 20 ft
-  weightAtBaseLengthKg: number // weight (kg) at base length
+  baseLengthFt: number // usually 20 ft (for linear materials)
+  weightAtBaseLengthKg: number // weight (kg) at base length (for linear materials)
+  weightPerSqFt?: number // weight (kg) per sq.ft (for area-based materials like Foam, Fabric)
   pricePerKg: number // INR per kg
   teamId?: string // Optional team association
+  measurementType?: "linear" | "area" // Track if material is linear or area-based
 }
 
 type Team = {
@@ -40,6 +42,7 @@ type LineItem = {
   id: string
   materialId: string
   lengthFt: number
+  widthFt?: number // Optional width for area-based materials (Foam, Fabric)
   qty: number
 }
 
@@ -106,6 +109,7 @@ export function EstimateCalculator() {
   const [selectedMaterialId, setSelectedMaterialId] = useState<string>("")
   const [lengthUnit, setLengthUnit] = useState<"ft" | "in">("ft")
   const [lengthExpr, setLengthExpr] = useState<string>("")
+  const [widthExpr, setWidthExpr] = useState<string>("") // For area-based materials
   const [lineQty, setLineQty] = useState<number>(1)
 
   const [wastagePercent, setWastagePercent] = useState<number>(0)
@@ -119,6 +123,7 @@ export function EstimateCalculator() {
 
   const [userId, setUserId] = useState<string | null>(null)
   const [userEmail, setUserEmail] = useState<string | null>(null)
+  const [isSavingMaterial, setIsSavingMaterial] = useState(false)
 
   // Load materials from localStorage
   useEffect(() => {
@@ -384,6 +389,9 @@ export function EstimateCalculator() {
       return
     }
     if (!materialDraft.name || materialDraft.weightAtBaseLengthKg <= 0 || materialDraft.pricePerKg <= 0) return
+
+    setIsSavingMaterial(true)
+
     const newMat: Material = {
       ...materialDraft,
       id: crypto.randomUUID(),
@@ -396,6 +404,7 @@ export function EstimateCalculator() {
         const supabase = getSupabaseBrowserClient()
         if (!supabase) {
           setMaterials((prev) => [newMat, ...prev])
+          setIsSavingMaterial(false)
           return
         }
 
@@ -410,22 +419,35 @@ export function EstimateCalculator() {
         })
         if (error) throw error
         await loadCloudMaterials()
+
+        // Success - reset form
+        setMaterialDraft({
+          id: "",
+          type: "Sariya",
+          name: "",
+          baseLengthFt: 20,
+          weightAtBaseLengthKg: 0,
+          pricePerKg: 0,
+        })
+        setIsSavingMaterial(false)
       } catch (e: any) {
         alert("Failed to save to cloud. Using local storage.")
         setMaterials((prev) => [newMat, ...prev])
+        setIsSavingMaterial(false)
       }
     } else {
       setMaterials((prev) => [newMat, ...prev])
+      // Reset form after local save
+      setMaterialDraft({
+        id: "",
+        type: "Sariya",
+        name: "",
+        baseLengthFt: 20,
+        weightAtBaseLengthKg: 0,
+        pricePerKg: 0,
+      })
+      setIsSavingMaterial(false)
     }
-
-    setMaterialDraft({
-      id: "",
-      type: "Sariya",
-      name: "",
-      baseLengthFt: 20,
-      weightAtBaseLengthKg: 0,
-      pricePerKg: 0,
-    })
   }
 
   const removeMaterial = async (id: string) => {
@@ -612,41 +634,72 @@ export function EstimateCalculator() {
       {/* Materials Catalog */}
       <Card>
         <CardContent className="p-4 lg:p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <h3 className="text-base font-semibold">Materials Catalog</h3>
-              {teams.length > 0 && (
-                <Select
-                  value={selectedTeamId || "personal"}
-                  onValueChange={(value) => {
-                    const teamId = value === "personal" ? null : value
-                    setSelectedTeamId(teamId)
-                    if (teamId) {
-                      const team = teams.find(t => t.id === teamId)
-                      if (team) updatePermissions(team.role)
-                    } else {
-                      updatePermissions("personal")
-                    }
-                    loadCloudMaterials()
-                  }}
-                >
-                  <SelectTrigger className="w-[200px]">
-                    <SelectValue placeholder="Select Catalog" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="personal">Personal Catalog</SelectItem>
-                    {teams.map((team) => (
-                      <SelectItem key={team.id} value={team.id}>
-                        {team.name} ({team.role})
+          {/* Team Selector - Standalone Section */}
+          {teams.length > 0 && (
+            <div className="mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
+              <div className="flex flex-col gap-3">
+                <div className="flex items-center gap-2">
+                  <svg className="h-5 w-5 text-blue-600 dark:text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                  <h4 className="text-sm font-semibold text-blue-900 dark:text-blue-100">Select Catalog</h4>
+                </div>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                  <Select
+                    value={selectedTeamId || "personal"}
+                    onValueChange={(value) => {
+                      const teamId = value === "personal" ? null : value
+                      setSelectedTeamId(teamId)
+                      if (teamId) {
+                        const team = teams.find(t => t.id === teamId)
+                        if (team) updatePermissions(team.role)
+                      } else {
+                        updatePermissions("personal")
+                      }
+                      loadCloudMaterials()
+                    }}
+                  >
+                    <SelectTrigger className="w-full sm:w-[280px] bg-white dark:bg-gray-900 border-blue-300 dark:border-blue-700 focus:ring-2 focus:ring-blue-500">
+                      <SelectValue placeholder="Select Catalog" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="personal">
+                        <div className="flex items-center gap-2">
+                          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                          </svg>
+                          <span>Personal Catalog</span>
+                        </div>
                       </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-              {selectedTeamId && !permissions.canCreate && (
-                <Badge variant="secondary">View Only</Badge>
-              )}
+                      {teams.map((team) => (
+                        <SelectItem key={team.id} value={team.id}>
+                          <div className="flex items-center gap-2">
+                            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                            </svg>
+                            <span className="font-medium">{team.name}</span>
+                            <span className="text-xs text-muted-foreground">({team.role})</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {selectedTeamId && !permissions.canCreate && (
+                    <Badge variant="secondary" className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300 border-amber-300 dark:border-amber-700">
+                      <svg className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                      View Only
+                    </Badge>
+                  )}
+                </div>
+              </div>
             </div>
+          )}
+
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-base font-semibold">Materials Catalog</h3>
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" onClick={exportMaterials}>
                 Export
@@ -689,6 +742,10 @@ export function EstimateCalculator() {
                     <SelectItem value="Pati">Pati</SelectItem>
                     <SelectItem value="Sheet">Sheet</SelectItem>
                     <SelectItem value="Pipe">Pipe</SelectItem>
+                    <SelectItem value="Fabric">Fabric</SelectItem>
+                    <SelectItem value="Foam">Foam</SelectItem>
+                    <SelectItem value="Ply">Ply</SelectItem>
+                    <SelectItem value="Wood">Wood</SelectItem>
                     <SelectItem value="Other">Other</SelectItem>
                   </SelectContent>
                 </Select>
@@ -732,10 +789,19 @@ export function EstimateCalculator() {
                 <Button
                   onClick={addMaterial}
                   className="w-full"
-                  disabled={!permissions.canCreate}
+                  disabled={!permissions.canCreate || isSavingMaterial}
                 >
-                  <Save className="h-4 w-4 mr-2" />
-                  Save Material
+                  {isSavingMaterial ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4 mr-2" />
+                      Save Material
+                    </>
+                  )}
                 </Button>
               </div>
             </div>
@@ -836,7 +902,7 @@ export function EstimateCalculator() {
 
           {/* Add Line */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
-            <div className="col-span-2 md:col-span-2">
+            <div className="col-span-2 md:col-span-1">
               <Label className="mb-1 block">Material</Label>
               <Select value={selectedMaterialId} onValueChange={setSelectedMaterialId}>
                 <SelectTrigger className="w-full">
@@ -851,15 +917,17 @@ export function EstimateCalculator() {
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <Label className="mb-1 block">Length</Label>
-              <Input
-                placeholder="e.g. 10+12+15"
-                inputMode="text"
-                pattern="[0-9+\\-*/().\\s]*"
-                value={lengthExpr}
-                onChange={(e) => setLengthExpr(e.target.value)}
-              />
+            <div className="col-span-2 flex items-end gap-1">
+              <div className="flex-1">
+                <Label className="mb-1 block">Length</Label>
+                <Input
+                  placeholder="e.g. 10+12+15"
+                  inputMode="text"
+                  pattern="[0-9+\\-*/().\\s]*"
+                  value={lengthExpr}
+                  onChange={(e) => setLengthExpr(e.target.value)}
+                />
+              </div>
               <div className="mt-2">
                 <Select value={lengthUnit} onValueChange={(v: "ft" | "in") => setLengthUnit(v)}>
                   <SelectTrigger className="w-full">
@@ -940,79 +1008,185 @@ export function EstimateCalculator() {
             </Table>
           </div>
 
-          <div className="mt-4 grid grid-cols-2 md:grid-cols-5 gap-3">
-            <div>
-              <Label className="mb-1 block">Wastage %</Label>
-              <Input
-                type="number"
-                inputMode="decimal"
-                value={wastagePercent}
-                onChange={(e) => setWastagePercent(Number(e.target.value || 0))}
-              />
+
+          {/* Additional Costs & Factors */}
+          <div className="mt-6 p-4 bg-gradient-to-r from-slate-50 to-gray-50 dark:from-slate-900/30 dark:to-gray-900/30 rounded-lg border border-slate-200 dark:border-slate-700">
+            <h4 className="text-sm font-semibold mb-4 text-slate-700 dark:text-slate-300">Additional Costs & Factors</h4>
+
+            {/* Material Factors Section */}
+            <div className="mb-4">
+              <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">Material Factors</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <Label className="mb-1 flex items-center gap-1.5">
+                    Wastage %
+                    <button
+                      type="button"
+                      className="inline-flex items-center"
+                      title="Material wastage factor (e.g., 5% for cutting losses and material waste)"
+                    >
+                      <Info className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground transition-colors" />
+                    </button>
+                  </Label>
+                  <Input
+                    type="number"
+                    inputMode="decimal"
+                    placeholder="0"
+                    value={wastagePercent}
+                    onChange={(e) => setWastagePercent(Number(e.target.value || 0))}
+                  />
+                </div>
+                <div>
+                  <Label className="mb-1 flex items-center gap-1.5">
+                    Overhead %
+                    <button
+                      type="button"
+                      className="inline-flex items-center"
+                      title="Overhead percentage for shop costs, utilities, rent, etc."
+                    >
+                      <Info className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground transition-colors" />
+                    </button>
+                  </Label>
+                  <Input
+                    type="number"
+                    inputMode="decimal"
+                    placeholder="0"
+                    value={overheadPercent}
+                    onChange={(e) => setOverheadPercent(Number(e.target.value || 0))}
+                  />
+                </div>
+              </div>
             </div>
+
+            {/* Labor & Cutting Section */}
             <div>
-              <Label className="mb-1 block">Cutting/ Cut (₹)</Label>
-              <Input
-                type="number"
-                inputMode="decimal"
-                value={cuttingPerCut}
-                onChange={(e) => setCuttingPerCut(Number(e.target.value || 0))}
-              />
-            </div>
-            <div>
-              <Label className="mb-1 block">Cuts</Label>
-              <Input
-                type="number"
-                inputMode="numeric"
-                value={cutsCount}
-                onChange={(e) => setCutsCount(Number(e.target.value || 0))}
-              />
-            </div>
-            <div>
-              <Label className="mb-1 block">Labor / kg (₹)</Label>
-              <Input
-                type="number"
-                inputMode="decimal"
-                value={laborPerKg}
-                onChange={(e) => setLaborPerKg(Number(e.target.value || 0))}
-              />
-            </div>
-            <div>
-              <Label className="mb-1 block">Overhead %</Label>
-              <Input
-                type="number"
-                inputMode="decimal"
-                value={overheadPercent}
-                onChange={(e) => setOverheadPercent(Number(e.target.value || 0))}
-              />
+              <p className="text-xs font-medium text-slate-600 dark:text-slate-400 mb-2">Labor & Cutting</p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <Label className="mb-1 flex items-center gap-1.5">
+                    Cutting/Cut (₹)
+                    <button
+                      type="button"
+                      className="inline-flex items-center"
+                      title="Cost per cut/piece for cutting operations"
+                    >
+                      <Info className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground transition-colors" />
+                    </button>
+                  </Label>
+                  <Input
+                    type="number"
+                    inputMode="decimal"
+                    placeholder="0"
+                    value={cuttingPerCut}
+                    onChange={(e) => setCuttingPerCut(Number(e.target.value || 0))}
+                  />
+                </div>
+                <div>
+                  <Label className="mb-1 flex items-center gap-1.5">
+                    Cuts
+                    <button
+                      type="button"
+                      className="inline-flex items-center"
+                      title="Number of cuts needed (auto-filled based on line items)"
+                    >
+                      <Info className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground transition-colors" />
+                    </button>
+                  </Label>
+                  <Input
+                    type="number"
+                    inputMode="numeric"
+                    placeholder="0"
+                    value={cutsCount}
+                    onChange={(e) => setCutsCount(Number(e.target.value || 0))}
+                  />
+                </div>
+                <div>
+                  <Label className="mb-1 flex items-center gap-1.5">
+                    Labor/kg (₹)
+                    <button
+                      type="button"
+                      className="inline-flex items-center"
+                      title="Labor cost per kilogram of material"
+                    >
+                      <Info className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground transition-colors" />
+                    </button>
+                  </Label>
+                  <Input
+                    type="number"
+                    inputMode="decimal"
+                    placeholder="0"
+                    value={laborPerKg}
+                    onChange={(e) => setLaborPerKg(Number(e.target.value || 0))}
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Totals */}
-          <div className="mt-4 flex flex-col gap-2">
-            <div className="flex items-center justify-between">
-              <div className="text-sm text-muted-foreground">
-                Weight is computed from each material's "weight at base length" scaled to entered ft/in.
+
+          {/* Estimate Summary */}
+          {totals.detailed.length > 0 && (
+            <div className="mt-6 p-5 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 dark:from-blue-950/20 dark:via-indigo-950/20 dark:to-purple-950/20 rounded-xl border-2 border-blue-200 dark:border-blue-800">
+              <h4 className="text-base font-semibold mb-4 text-blue-900 dark:text-blue-100 flex items-center gap-2">
+                <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                </svg>
+                Estimate Summary
+              </h4>
+
+              {/* Key Metrics Cards */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+                <div className="bg-white dark:bg-gray-900 p-4 rounded-lg border border-blue-200 dark:border-blue-700 shadow-sm">
+                  <p className="text-xs font-medium text-muted-foreground mb-1">Total Weight</p>
+                  <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">{totals.totalWeight.toFixed(2)} kg</p>
+                </div>
+                <div className="bg-white dark:bg-gray-900 p-4 rounded-lg border border-blue-200 dark:border-blue-700 shadow-sm">
+                  <p className="text-xs font-medium text-muted-foreground mb-1">Material Cost</p>
+                  <p className="text-2xl font-bold text-blue-600 dark:text-blue-400">₹{totals.totalCost.toFixed(2)}</p>
+                </div>
               </div>
-              <div className="flex items-center gap-3">
-                <Badge variant="outline" className="text-base">
-                  Total Weight: <span className="font-semibold ml-2">{totals.totalWeight.toFixed(2)} kg</span>
-                </Badge>
-                <Badge variant="outline" className="text-base">
-                  Base Cost: <span className="font-semibold ml-2">₹{totals.totalCost.toFixed(2)}</span>
-                </Badge>
-                <Badge className="text-base">
-                  Grand Total: <span className="font-semibold ml-2">₹{totals.grandTotal.toFixed(2)}</span>
-                </Badge>
+
+              {/* Cost Breakdown */}
+              <div className="bg-white/60 dark:bg-gray-900/40 p-4 rounded-lg border border-blue-100 dark:border-blue-800">
+                <p className="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3">Cost Breakdown</p>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between items-center py-1">
+                    <span className="text-muted-foreground">Material Cost</span>
+                    <span className="font-medium">₹{totals.totalCost.toFixed(2)}</span>
+                  </div>
+                  {totals.wastageAdd > 0 && (
+                    <div className="flex justify-between items-center py-1">
+                      <span className="text-muted-foreground">+ Wastage ({wastagePercent}%)</span>
+                      <span className="font-medium text-amber-600 dark:text-amber-400">₹{totals.wastageAdd.toFixed(2)}</span>
+                    </div>
+                  )}
+                  {totals.overheadAdd > 0 && (
+                    <div className="flex justify-between items-center py-1">
+                      <span className="text-muted-foreground">+ Overhead ({overheadPercent}%)</span>
+                      <span className="font-medium text-amber-600 dark:text-amber-400">₹{totals.overheadAdd.toFixed(2)}</span>
+                    </div>
+                  )}
+                  {totals.cuttingAdd > 0 && (
+                    <div className="flex justify-between items-center py-1">
+                      <span className="text-muted-foreground">+ Cutting ({cutsCount} cuts @ ₹{cuttingPerCut})</span>
+                      <span className="font-medium text-amber-600 dark:text-amber-400">₹{totals.cuttingAdd.toFixed(2)}</span>
+                    </div>
+                  )}
+                  {totals.laborAdd > 0 && (
+                    <div className="flex justify-between items-center py-1">
+                      <span className="text-muted-foreground">+ Labor ({totals.totalWeight.toFixed(2)} kg @ ₹{laborPerKg}/kg)</span>
+                      <span className="font-medium text-amber-600 dark:text-amber-400">₹{totals.laborAdd.toFixed(2)}</span>
+                    </div>
+                  )}
+                  <Separator className="my-2" />
+                  <div className="flex justify-between items-center py-2 bg-blue-100 dark:bg-blue-900/30 -mx-2 px-2 rounded">
+                    <span className="font-semibold text-blue-900 dark:text-blue-100">Grand Total</span>
+                    <span className="text-xl font-bold text-blue-600 dark:text-blue-400">₹{totals.grandTotal.toFixed(2)}</span>
+                  </div>
+                </div>
               </div>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm text-muted-foreground">
-              <div>Wastage: ₹{totals.wastageAdd.toFixed(2)}</div>
-              <div>Overhead: ₹{totals.overheadAdd.toFixed(2)}</div>
-              <div>Cutting: ₹{totals.cuttingAdd.toFixed(2)}</div>
-              <div>Labor: ₹{totals.laborAdd.toFixed(2)}</div>
-            </div>
-          </div>
+          )}
 
           {presetSummaries.length > 0 && (
             <div className="mt-6">

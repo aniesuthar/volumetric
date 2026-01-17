@@ -33,20 +33,8 @@ export function AuthButton() {
   }, [])
 
   const handleSignIn = async () => {
-    try {
-      const supabase = getSupabaseBrowserClient()
-      if (!supabase) return
-
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
-      })
-      if (error) throw error
-    } catch (error) {
-      console.error("Error signing in:", error)
-    }
+    // Redirect to signin page instead of OAuth
+    window.location.href = "/auth/signin"
   }
 
   const handleSignOut = async () => {

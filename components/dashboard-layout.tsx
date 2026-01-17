@@ -1,10 +1,11 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Calculator, Package, TrendingUp, ExternalLink, Menu, X, Wrench, User, ShoppingBag } from "lucide-react"
 import { InstallPrompt } from "@/components/install-prompt"
 import { AuthButton } from "@/components/auth-button"
 import { NavLink } from "@/components/nav-link"
+import { getSupabaseBrowserClient } from "@/lib/supabase/browser"
 
 type DashboardLayoutProps = {
   children: React.ReactNode
@@ -15,6 +16,20 @@ type DashboardLayoutProps = {
 
 export function DashboardLayout({ children, activeSection, title, description }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const supabase = getSupabaseBrowserClient()
+      if (!supabase) {
+        setIsAuthenticated(false)
+        return
+      }
+      const { data: { user } } = await supabase.auth.getUser()
+      setIsAuthenticated(!!user)
+    }
+    checkAuth()
+  }, [])
 
   const navigationItems = [
     {
@@ -88,25 +103,33 @@ export function DashboardLayout({ children, activeSection, title, description }:
           {/* Navigation */}
           <nav className="flex-1 p-4">
             <div className="space-y-2">
-              {navigationItems.map((item) => {
-                const Icon = item.icon
-                const isActive = activeSection === item.id
-                return (
-                  <NavLink
-                    key={item.id}
-                    href={item.href}
-                    onClick={() => setSidebarOpen(false)}
-                    className={
-                      isActive
-                        ? "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium bg-primary text-primary-foreground no-underline"
-                        : "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors no-underline"
-                    }
-                  >
-                    <Icon className="h-4 w-4" />
-                    {item.label}
-                  </NavLink>
-                )
-              })}
+              {navigationItems
+                .filter((item) => {
+                  // Hide protected items if not authenticated
+                  if (!isAuthenticated && (item.id === "estimate" || item.id === "meesho" || item.id === "account")) {
+                    return false
+                  }
+                  return true
+                })
+                .map((item) => {
+                  const Icon = item.icon
+                  const isActive = activeSection === item.id
+                  return (
+                    <NavLink
+                      key={item.id}
+                      href={item.href}
+                      onClick={() => setSidebarOpen(false)}
+                      className={
+                        isActive
+                          ? "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium bg-primary text-primary-foreground no-underline"
+                          : "w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm font-medium text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground transition-colors no-underline"
+                      }
+                    >
+                      <Icon className="h-4 w-4" />
+                      {item.label}
+                    </NavLink>
+                  )
+                })}
             </div>
           </nav>
 
