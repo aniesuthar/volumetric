@@ -18,9 +18,11 @@ type Material = {
   type: "Sariya" | "Pati" | "Sheet" | "Pipe" | "Fabric" | "Foam" | "Ply" | "Wood" | "Other"
   name: string
   baseLengthFt: number // usually 20 ft (for linear materials)
-  weightAtBaseLengthKg: number // weight (kg) at base length (for linear materials)
-  weightPerSqFt?: number // weight (kg) per sq.ft (for area-based materials like Foam, Fabric)
-  pricePerKg: number // INR per kg
+  weightAtBaseLengthKg: number // weight (kg) at base length - for ALL materials
+  pricePerKg: number // INR per kg (for linear materials)
+  pricePerSqFt?: number // INR per sq.ft (for area-based materials like Foam, Ply)
+  pricePerMeter?: number // INR per meter (for Fabric)
+  fabricWidthInches?: number // Fabric width in inches (e.g., 54")
   teamId?: string // Optional team association
   measurementType?: "linear" | "area" // Track if material is linear or area-based
 }
@@ -274,6 +276,31 @@ export function EstimateCalculator() {
   // Helper: compute weight per foot for a material
   const weightPerFoot = (m: Material) => m.weightAtBaseLengthKg / m.baseLengthFt
 
+  // Helper: calculate weight for a line item (all materials use linear calculation)
+  const calculateWeight = (line: LineItem, mat: Material): number => {
+    // All materials use linear calculation: length × qty × weightPerFt
+    // Even for area materials, weight is just the iron/material weight
+    const perFt = weightPerFoot(mat)
+    return perFt * line.lengthFt * line.qty
+  }
+
+  // Helper: calculate cost for a line item (handles both area and weight-based pricing)
+  const calculateCost = (line: LineItem, mat: Material): number => {
+    if (mat.type === "Fabric") {
+      // Fabric: price per meter × length in meters
+      const lengthInMeters = line.lengthFt * 0.3048 // Convert feet to meters
+      return lengthInMeters * line.qty * (mat.pricePerMeter || 0)
+    } else if (mat.type === "Foam" || mat.type === "Ply") {
+      // Area-based pricing: area × pricePerSqFt
+      const sqFt = (line.lengthFt || 0) * (line.widthFt || 0)
+      return sqFt * line.qty * (mat.pricePerSqFt || 0)
+    } else {
+      // Weight-based pricing: weight × pricePerKg
+      const weight = calculateWeight(line, mat)
+      return weight * mat.pricePerKg
+    }
+  }
+
   const loadUserTeams = async () => {
     try {
       const response = await fetch("/api/teams")
@@ -373,6 +400,10 @@ export function EstimateCalculator() {
           baseLengthFt: Number(r.base_length_ft),
           weightAtBaseLengthKg: Number(r.weight_at_base_kg),
           pricePerKg: Number(r.price_per_kg),
+          pricePerSqFt: r.price_per_sq_ft ? Number(r.price_per_sq_ft) : undefined,
+          pricePerMeter: r.price_per_meter ? Number(r.price_per_meter) : undefined,
+          fabricWidthInches: r.fabric_width_inches ? Number(r.fabric_width_inches) : undefined,
+          measurementType: r.measurement_type || undefined,
           teamId: r.team_id,
         })) as Material[]
         setMaterials(mapped)
@@ -388,7 +419,30 @@ export function EstimateCalculator() {
       alert("You don't have permission to add materials")
       return
     }
-    if (!materialDraft.name || materialDraft.weightAtBaseLengthKg <= 0 || materialDraft.pricePerKg <= 0) return
+
+    // Validate based on material type
+    if (!materialDraft.name) {
+      alert("Please enter material name")
+      return
+    }
+
+    if (materialDraft.type === "Fabric") {
+      if (!materialDraft.fabricWidthInches || !materialDraft.pricePerMeter) {
+        alert("Please enter fabric width and price per meter")
+        return
+      }
+    } else if (materialDraft.type === "Foam" || materialDraft.type === "Ply") {
+      if (!materialDraft.pricePerSqFt) {
+        alert("Please enter price per sq.ft")
+        return
+      }
+    } else {
+      // Linear materials
+      if (materialDraft.weightAtBaseLengthKg <= 0 || materialDraft.pricePerKg <= 0) {
+        alert("Please enter weight and price for linear material")
+        return
+      }
+    }
 
     setIsSavingMaterial(true)
 
@@ -416,6 +470,10 @@ export function EstimateCalculator() {
           base_length_ft: newMat.baseLengthFt,
           weight_at_base_kg: newMat.weightAtBaseLengthKg,
           price_per_kg: newMat.pricePerKg,
+          price_per_sq_ft: newMat.pricePerSqFt || null,
+          price_per_meter: newMat.pricePerMeter || null,
+          fabric_width_inches: newMat.fabricWidthInches || null,
+          measurement_type: newMat.measurementType || null,
         })
         if (error) throw error
         await loadCloudMaterials()
@@ -484,16 +542,29 @@ export function EstimateCalculator() {
     if (!raw || !isFinite(raw) || raw <= 0) return
     const lengthFtComputed = lengthUnit === "ft" ? raw : raw / 12
     if (lineQty <= 0) return
+
+    // For area-based materials (Foam, Fabric), we need width as well
+    const isAreaMaterial = mat.type === "Foam" || mat.type === "Fabric"
+    let widthFtComputed: number | undefined = undefined
+
+    if (isAreaMaterial) {
+      const rawWidth = evaluateExpression(widthExpr)
+      if (!rawWidth || !isFinite(rawWidth) || rawWidth <= 0) return
+      widthFtComputed = lengthUnit === "ft" ? rawWidth : rawWidth / 12
+    }
+
     setLines((prev) => [
       {
         id: crypto.randomUUID(),
         materialId: selectedMaterialId,
         lengthFt: lengthFtComputed,
+        widthFt: widthFtComputed,
         qty: lineQty,
       },
       ...prev,
     ])
     setLengthExpr("")
+    setWidthExpr("") // Reset width as well
     setLineQty(1)
   }
 
@@ -584,9 +655,8 @@ export function EstimateCalculator() {
     const detailed = lines.map((l) => {
       const mat = materials.find((m) => m.id === l.materialId)
       if (!mat) return { ...l, mat, weightKg: 0, cost: 0 }
-      const perFt = weightPerFoot(mat)
-      const weightKg = perFt * l.lengthFt * l.qty
-      const cost = weightKg * mat.pricePerKg
+      const weightKg = calculateWeight(l, mat)  // Use new helper for both linear and area
+      const cost = calculateCost(l, mat)  // Use new cost helper that handles both pricing types
       totalWeight += weightKg
       totalCost += cost
       return { ...l, mat, weightKg, cost }
@@ -610,9 +680,8 @@ export function EstimateCalculator() {
       for (const l of p.lines) {
         const mat = materials.find((m) => m.id === l.materialId)
         if (!mat) continue
-        const perFt = weightPerFoot(mat)
-        const w = perFt * l.lengthFt * l.qty
-        const c = w * mat.pricePerKg
+        const w = calculateWeight(l, mat)  // Use new helper for both linear and area
+        const c = calculateCost(l, mat)  // Use new cost helper that handles both pricing types
         const ft = l.lengthFt * l.qty
         weight += w
         cost += c
@@ -758,33 +827,127 @@ export function EstimateCalculator() {
                   onChange={(e) => setMaterialDraft((d) => ({ ...d, name: e.target.value }))}
                 />
               </div>
-              <div>
-                <Label className="mb-1 block">Base Length (ft)</Label>
-                <Input
-                  type="number"
-                  inputMode="numeric"
-                  value={materialDraft.baseLengthFt}
-                  onChange={(e) => setMaterialDraft((d) => ({ ...d, baseLengthFt: Number(e.target.value || 0) }))}
-                />
-              </div>
-              <div>
-                <Label className="mb-1 block">Weight @ Base (kg)</Label>
-                <Input
-                  type="number"
-                  inputMode="decimal"
-                  value={materialDraft.weightAtBaseLengthKg}
-                  onChange={(e) => setMaterialDraft((d) => ({ ...d, weightAtBaseLengthKg: Number(e.target.value || 0) }))}
-                />
-              </div>
-              <div>
-                <Label className="mb-1 block">Price per kg (₹)</Label>
-                <Input
-                  type="number"
-                  inputMode="decimal"
-                  value={materialDraft.pricePerKg}
-                  onChange={(e) => setMaterialDraft((d) => ({ ...d, pricePerKg: Number(e.target.value || 0) }))}
-                />
-              </div>
+
+              {/* Conditional fields based on material type */}
+              {materialDraft.type === "Fabric" ? (
+                /* Fabric-specific fields */
+                <>
+                  <div>
+                    <Label className="mb-1 flex items-center gap-1.5">
+                      Fabric Width (inches)
+                      <button
+                        type="button"
+                        className="inline-flex items-center"
+                        title="Width of fabric in inches (e.g., 54 inches)"
+                      >
+                        <Info className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground transition-colors" />
+                      </button>
+                    </Label>
+                    <Input
+                      type="number"
+                      inputMode="decimal"
+                      placeholder="e.g. 54"
+                      value={materialDraft.fabricWidthInches || ""}
+                      onChange={(e) => setMaterialDraft((d) => ({
+                        ...d,
+                        fabricWidthInches: Number(e.target.value || 0),
+                        measurementType: "area",
+                        baseLengthFt: 1,
+                        weightAtBaseLengthKg: 0
+                      }))}
+                    />
+                  </div>
+                  <div>
+                    <Label className="mb-1 flex items-center gap-1.5">
+                      Price per meter (₹)
+                      <button
+                        type="button"
+                        className="inline-flex items-center"
+                        title="Price in rupees per meter of fabric"
+                      >
+                        <Info className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground transition-colors" />
+                      </button>
+                    </Label>
+                    <Input
+                      type="number"
+                      inputMode="decimal"
+                      placeholder="e.g. 120"
+                      value={materialDraft.pricePerMeter || ""}
+                      onChange={(e) => setMaterialDraft((d) => ({
+                        ...d,
+                        pricePerMeter: Number(e.target.value || 0),
+                        pricePerKg: 0,
+                        pricePerSqFt: 0
+                      }))}
+                    />
+                  </div>
+                </>
+              ) : materialDraft.type === "Foam" || materialDraft.type === "Ply" ? (
+                /* Other area-based material fields (Foam, Ply) */
+                <>
+                  <div>
+                    <Label className="mb-1 flex items-center gap-1.5">
+                      Price per sq.ft (₹)
+                      <button
+                        type="button"
+                        className="inline-flex items-center"
+                        title="Price in rupees per square foot"
+                      >
+                        <Info className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground transition-colors" />
+                      </button>
+                    </Label>
+                    <Input
+                      type="number"
+                      inputMode="decimal"
+                      placeholder="e.g. 50"
+                      value={materialDraft.pricePerSqFt || ""}
+                      onChange={(e) => setMaterialDraft((d) => ({
+                        ...d,
+                        pricePerSqFt: Number(e.target.value || 0),
+                        pricePerKg: 0,  // Set default for unused field
+                        measurementType: "area",
+                        baseLengthFt: 1,
+                        weightAtBaseLengthKg: 0
+                      }))}
+                    />
+                  </div>
+                </>
+              ) : (
+                /* Linear material fields */
+                <>
+                  <div>
+                    <Label className="mb-1 block">Base Length (ft)</Label>
+                    <Input
+                      type="number"
+                      inputMode="numeric"
+                      value={materialDraft.baseLengthFt}
+                      onChange={(e) => setMaterialDraft((d) => ({
+                        ...d,
+                        baseLengthFt: Number(e.target.value || 0),
+                        measurementType: "linear"
+                      }))}
+                    />
+                  </div>
+                  <div>
+                    <Label className="mb-1 block">Weight @ Base (kg)</Label>
+                    <Input
+                      type="number"
+                      inputMode="decimal"
+                      value={materialDraft.weightAtBaseLengthKg}
+                      onChange={(e) => setMaterialDraft((d) => ({ ...d, weightAtBaseLengthKg: Number(e.target.value || 0) }))}
+                    />
+                  </div>
+                  <div>
+                    <Label className="mb-1 block">Price per kg (₹)</Label>
+                    <Input
+                      type="number"
+                      inputMode="decimal"
+                      value={materialDraft.pricePerKg}
+                      onChange={(e) => setMaterialDraft((d) => ({ ...d, pricePerKg: Number(e.target.value || 0) }))}
+                    />
+                  </div>
+                </>
+              )}
               <div className="col-span-2 md:col-span-3">
                 <Button
                   onClick={addMaterial}
@@ -821,8 +984,8 @@ export function EstimateCalculator() {
                 <TableRow>
                   <TableHead>Type</TableHead>
                   <TableHead>Name</TableHead>
-                  <TableHead className="text-right">Wt/ft (kg)</TableHead>
-                  <TableHead className="text-right">Price/kg</TableHead>
+                  <TableHead className="text-right">Specs</TableHead>
+                  <TableHead className="text-right">Price</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -830,26 +993,41 @@ export function EstimateCalculator() {
                 {materials.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center text-muted-foreground">
-                      No materials saved yet.
+                      No materials yet. Add one above.
                     </TableCell>
                   </TableRow>
                 ) : (
                   materials.map((m) => (
                     <TableRow key={m.id}>
                       <TableCell>{m.type}</TableCell>
-                      <TableCell className="max-w-[220px] truncate">{m.name}</TableCell>
-                      <TableCell className="text-right">
-                        {(m.weightAtBaseLengthKg / m.baseLengthFt).toFixed(3)}
-                      </TableCell>
-                      <TableCell className="text-right">₹{m.pricePerKg.toFixed(2)}</TableCell>
-                      <TableCell className="text-right">
-                        {permissions.canDelete ? (
-                          <Button variant="ghost" size="icon" onClick={() => removeMaterial(m.id)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                      <TableCell className="max-w-[200px] truncate">{m.name}</TableCell>
+                      <TableCell className="text-right text-sm text-muted-foreground">
+                        {m.type === "Fabric" ? (
+                          `${m.fabricWidthInches || 0}"`
+                        ) : m.type === "Foam" || m.type === "Ply" ? (
+                          "Area-based"
                         ) : (
-                          <span className="text-muted-foreground">-</span>
+                          `${weightPerFoot(m).toFixed(3)} kg/ft`
                         )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {m.type === "Fabric" ? (
+                          `₹${m.pricePerMeter || 0}/m`
+                        ) : m.type === "Foam" || m.type === "Ply" ? (
+                          `₹${m.pricePerSqFt || 0}/sq.ft`
+                        ) : (
+                          `₹${m.pricePerKg}/kg`
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => removeMaterial(m.id)}
+                          disabled={!permissions.canDelete}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </TableCell>
                     </TableRow>
                   ))
@@ -940,6 +1118,37 @@ export function EstimateCalculator() {
                 </Select>
               </div>
             </div>
+
+            {/* Conditional Width field for area-based materials */}
+            {(() => {
+              const selectedMat = materials.find((m) => m.id === selectedMaterialId)
+              return selectedMat && (selectedMat.type === "Foam" || selectedMat.type === "Fabric" || selectedMat.type === "Ply") ? (
+                <div className="col-span-2 flex items-end gap-1">
+                  <div className="flex-1">
+                    <Label className="mb-1 block">Width (Breadth)</Label>
+                    <Input
+                      placeholder="e.g. 3+2"
+                      inputMode="text"
+                      pattern="[0-9+\\-*/().\\s]*"
+                      value={widthExpr}
+                      onChange={(e) => setWidthExpr(e.target.value)}
+                    />
+                  </div>
+                  <div className="mt-2">
+                    <Select value={lengthUnit} onValueChange={(v: "ft" | "in") => setLengthUnit(v)}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Unit" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="ft">Feet (ft)</SelectItem>
+                        <SelectItem value="in">Inch (in)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              ) : null
+            })()}
+
             <div>
               <Label className="mb-1 block">Qty</Label>
               <Input
@@ -992,7 +1201,12 @@ export function EstimateCalculator() {
                       <TableCell className="max-w-[240px] truncate">
                         {d.mat?.type}: {d.mat?.name}
                       </TableCell>
-                      <TableCell className="text-right">{d.lengthFt}</TableCell>
+                      <TableCell className="text-right">
+                        {d.mat?.type === "Foam" || d.mat?.type === "Fabric"
+                          ? `${d.lengthFt} × ${d.widthFt || 0} = ${(d.lengthFt * (d.widthFt || 0)).toFixed(2)} sq.ft`
+                          : `${d.lengthFt} ft`
+                        }
+                      </TableCell>
                       <TableCell className="text-right">{d.qty}</TableCell>
                       <TableCell className="text-right">{d.weightKg.toFixed(2)}</TableCell>
                       <TableCell className="text-right">₹{d.cost.toFixed(2)}</TableCell>
