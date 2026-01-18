@@ -5,6 +5,8 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 // Public routes that don't require authentication
 const publicRoutes = [
     '/',
+    'volumetric',
+    '/profit',
     '/auth/signin',
     '/auth/signup',
     '/auth/callback',
