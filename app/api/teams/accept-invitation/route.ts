@@ -39,7 +39,10 @@ export async function GET(request: NextRequest) {
       .eq("status", "pending")
       .single()
 
+    console.log("Invitation query:", { token, invitation, error })
+
     if (error || !invitation) {
+      console.error("Invitation not found:", { error, token })
       return NextResponse.json({ error: "Invitation not found or has expired" }, { status: 404 })
     }
 

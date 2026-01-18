@@ -71,12 +71,15 @@ export async function middleware(request: NextRequest) {
         }
     )
 
+    // Allow all API routes - they handle their own auth
+    const isApiRoute = pathname.startsWith('/api/')
+
     // Check if route is public
     const isPublicRoute = publicRoutes.some(route =>
         pathname === route || pathname.startsWith(route + '/')
     )
 
-    if (isPublicRoute) {
+    if (isPublicRoute || isApiRoute) {
         // If user is already authenticated and trying to access auth pages, redirect to home
         if (authPages.some(route => pathname.startsWith(route))) {
             const { data: { user } } = await supabase.auth.getUser()
