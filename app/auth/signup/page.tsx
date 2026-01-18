@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -62,30 +62,6 @@ export default function SignUpPage() {
       setLoading(false)
     }
   }
-
-  useEffect(() => {
-    // Check if user is already signed in
-    const checkUser = async () => {
-      const supabase = getSupabaseBrowserClient()
-
-      if (!supabase) return
-
-      const { data: { user } } = await supabase.auth.getUser()
-
-      if (user) {
-        // Check for stored invitation redirect
-        const invitationRedirect = localStorage.getItem('invitationRedirect')
-        if (invitationRedirect) {
-          localStorage.removeItem('invitationRedirect')
-          window.location.href = invitationRedirect
-        } else {
-          router.push(redirectTo || '/')
-        }
-      }
-    }
-
-    checkUser()
-  }, [router, redirectTo])
 
   if (success) {
     const hasPendingInvitation = typeof window !== 'undefined' && localStorage.getItem('pendingInvitation')

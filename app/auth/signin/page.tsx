@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { getSupabaseBrowserClient } from "@/lib/supabase/browser"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -9,7 +9,7 @@ import { Mail, ArrowLeft, Loader2, Eye, EyeOff } from "lucide-react"
 export default function SignInPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const redirectTo = searchParams.get('redirectTo')
+  const redirectTo = searchParams.get('redirect') || searchParams.get('redirectTo')
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -55,30 +55,6 @@ export default function SignInPage() {
       setLoading(false)
     }
   }
-
-  useEffect(() => {
-    // Check if user is already signed in
-    const checkUser = async () => {
-      const supabase = getSupabaseBrowserClient()
-
-      if (!supabase) return
-
-      const { data: { user } } = await supabase.auth.getUser()
-
-      if (user) {
-        // Check for stored invitation redirect
-        const invitationRedirect = localStorage.getItem('invitationRedirect')
-        if (invitationRedirect) {
-          localStorage.removeItem('invitationRedirect')
-          window.location.href = invitationRedirect
-        } else {
-          router.push(redirectTo || '/')
-        }
-      }
-    }
-
-    checkUser()
-  }, [router, redirectTo])
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
