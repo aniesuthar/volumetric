@@ -9,9 +9,10 @@ import { UserPlus, ArrowLeft, Loader2, Eye, EyeOff, CheckCircle } from "lucide-r
 export default function SignUpPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const redirectTo = searchParams.get('redirectTo')
+  const redirectTo = searchParams.get('redirectTo') || searchParams.get('redirect')
+  const emailParam = searchParams.get('email')
 
-  const [email, setEmail] = useState("")
+  const [email, setEmail] = useState(emailParam || "")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
@@ -87,6 +88,8 @@ export default function SignUpPage() {
   }, [router, redirectTo])
 
   if (success) {
+    const hasPendingInvitation = typeof window !== 'undefined' && localStorage.getItem('pendingInvitation')
+
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
         <Card className="w-full max-w-md">
@@ -98,8 +101,15 @@ export default function SignUpPage() {
                 We've sent you a confirmation link at <strong>{email}</strong>
               </p>
               <p className="text-sm text-gray-500 mb-4">
-                Click the link in your email to complete your account setup.
+                Click the link in your email to complete your account setup{hasPendingInvitation ? ' and accept your team invitation' : ''}.
               </p>
+              {hasPendingInvitation && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                  <p className="text-sm text-blue-800">
+                    📧 After verifying your email, you'll be automatically redirected to accept your team invitation.
+                  </p>
+                </div>
+              )}
               <button
                 onClick={() => router.push(`/auth/signin${redirectTo ? `?redirectTo=${encodeURIComponent(redirectTo)}` : ''}`)}
                 className="w-full px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"

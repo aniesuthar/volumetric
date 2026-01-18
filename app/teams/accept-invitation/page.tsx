@@ -287,7 +287,14 @@ export default function AcceptInvitationPage() {
                 <div className="text-center">
                   <p className="text-sm text-gray-600 mb-2">Don't have an account?</p>
                   <button
-                    onClick={() => router.push('/auth/signup')}
+                    onClick={() => {
+                      // Store invitation data for after signup
+                      if (typeof window !== 'undefined' && token) {
+                        localStorage.setItem('pendingInvitation', token)
+                        localStorage.setItem('invitationEmail', invitation.email)
+                      }
+                      router.push(`/auth/signup?email=${encodeURIComponent(invitation.email)}&redirect=${encodeURIComponent(`/teams/accept-invitation?token=${token}`)}`)
+                    }}
                     className="text-primary hover:underline font-medium"
                   >
                     Create account with {invitation.email}
