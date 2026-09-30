@@ -45,6 +45,7 @@ interface SavedDimension {
   height: string
   weight: string
   unit: string
+  divisor?: string
   volumetricWeight: number
   usedWeight: number
   bestRate?: CourierRate
@@ -66,12 +67,15 @@ interface PincodeResponse {
   responseCode: number
 }
 
+const DEFAULT_DIVISOR = 5000
+
 export function VolumetricWeightCalculator() {
   const [unit, setUnit] = useState("cm")
   const [length, setLength] = useState("")
   const [breadth, setBreadth] = useState("")
   const [height, setHeight] = useState("")
   const [weight, setWeight] = useState("")
+  const [volumetricDivisor, setVolumetricDivisor] = useState(String(DEFAULT_DIVISOR))
   const [convertValues, setConvertValues] = useState(false)
   const [volumetricWeight, setVolumetricWeight] = useState(0)
   const [usedWeight, setUsedWeight] = useState(0)
@@ -91,6 +95,12 @@ export function VolumetricWeightCalculator() {
   const [loginError, setLoginError] = useState("")
 
   const conversionFactor = 2.54
+
+  // Safe numeric divisor: falls back to 5000 if empty / invalid / <= 0
+  const divisorNumber = (() => {
+    const n = Number.parseFloat(volumetricDivisor)
+    return Number.isFinite(n) && n > 0 ? n : DEFAULT_DIVISOR
+  })()
 
   const getConvertedValue = (value: string, fromUnit: string) => {
     if (!value) return ""
@@ -224,6 +234,7 @@ export function VolumetricWeightCalculator() {
       height,
       weight,
       unit,
+      divisor: volumetricDivisor,
       volumetricWeight,
       usedWeight,
       bestRate: courierRates.length > 0 ? courierRates[0] : undefined,
@@ -246,6 +257,7 @@ export function VolumetricWeightCalculator() {
     setHeight(dimension.height)
     setWeight(dimension.weight)
     setUnit(dimension.unit)
+    setVolumetricDivisor(dimension.divisor || String(DEFAULT_DIVISOR))
   }
 
   useEffect(() => {
@@ -253,12 +265,21 @@ export function VolumetricWeightCalculator() {
     const savedAuthToken = localStorage.getItem("bigship_auth_token")
     const savedUserId = localStorage.getItem("bigship_user_id")
     const savedDims = localStorage.getItem("saved_dimensions")
+    const savedDivisor = localStorage.getItem("volumetric_divisor")
 
     if (savedAccessKey) setAccessKeyId(savedAccessKey)
     if (savedAuthToken) setAuthToken(savedAuthToken)
     if (savedUserId) setUserId(savedUserId)
     if (savedDims) setSavedDimensions(JSON.parse(savedDims))
+    if (savedDivisor) setVolumetricDivisor(savedDivisor)
   }, [])
+
+  // Remember the user's chosen divisor
+  useEffect(() => {
+    if (volumetricDivisor) {
+      localStorage.setItem("volumetric_divisor", volumetricDivisor)
+    }
+  }, [volumetricDivisor])
 
   const saveCredentials = () => {
     localStorage.setItem("bigship_access_key", accessKeyId)
@@ -453,14 +474,14 @@ export function VolumetricWeightCalculator() {
         heightCm = Number.parseFloat(height)
       }
 
-      const volWeight = (lengthCm * breadthCm * heightCm) / 5000
+      const volWeight = (lengthCm * breadthCm * heightCm) / divisorNumber
       const productWeight = Number.parseFloat(weight)
       const finalWeight = Math.max(volWeight, productWeight)
 
       setVolumetricWeight(volWeight)
       setUsedWeight(finalWeight)
     }
-  }, [length, breadth, height, weight, unit])
+  }, [length, breadth, height, weight, unit, divisorNumber])
 
 
   return (
@@ -530,6 +551,36 @@ export function VolumetricWeightCalculator() {
                       </Select>
                     </div>
                   </div> */}
+
+                  {/* Volumetric Divisor */}
+                  <div className="space-y-2">
+                    <Label htmlFor="volumetric-divisor">
+                      Volumetric Divisor
+                      <span className="text-xs text-muted-foreground">
+                        (L × B × H ÷ {divisorNumber})
+                      </span>
+                    </Label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        id="volumetric-divisor"
+                        type="number"
+                        inputMode="numeric"
+                        min={1}
+                        value={volumetricDivisor}
+                        onChange={(e) => setVolumetricDivisor(e.target.value)}
+                        placeholder="5000"
+                        className="max-w-[200px]"
+                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={volumetricDivisor === String(DEFAULT_DIVISOR)}
+                        onClick={() => setVolumetricDivisor(String(DEFAULT_DIVISOR))}
+                      >
+                        Reset to {DEFAULT_DIVISOR}
+                      </Button>
+                    </div>
+                  </div>
 
                   <div className="grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-4 gap-4">
                     <div className="space-y-2">
@@ -672,6 +723,9 @@ export function VolumetricWeightCalculator() {
                               </Badge>
                               <Badge variant="secondary" className="text-xs">
                                 {dim.usedWeight.toFixed(2)}kg
+                              </Badge>
+                              <Badge variant="outline" className="text-xs">
+                                ÷{dim.divisor || DEFAULT_DIVISOR}
                               </Badge>
                             </div>
                             <div className="text-xs ">
@@ -947,7 +1001,14 @@ export function VolumetricWeightCalculator() {
                       </div>
                     }
                   </div>
-                  <VolumetricUsed length={length} breadth={breadth} height={height} unit={unit} usedWeight={usedWeight} />
+                  <VolumetricUsed
+                    length={length}
+                    breadth={breadth}
+                    height={height}
+                    unit={unit}
+                    usedWeight={usedWeight}
+                    divisor={divisorNumber}
+                  />
                 </div>
 
               </CardContent>
@@ -1067,8 +1128,9 @@ interface VolProps {
   unit: string,
   conversionFactor?: number
   usedWeight: number
+  divisor?: number
 }
-function VolumetricUsed({ length, height, breadth, unit, conversionFactor = 2.54, usedWeight }: VolProps) {
+function VolumetricUsed({ length, height, breadth, unit, conversionFactor = 2.54, usedWeight, divisor = 5000 }: VolProps) {
   let lengthCm, breadthCm, heightCm;
 
   if (unit === "inches") {
@@ -1081,12 +1143,12 @@ function VolumetricUsed({ length, height, breadth, unit, conversionFactor = 2.54
     heightCm = Math.round(Number.parseFloat(height))
   }
 
-  const useDWeight = lengthCm * heightCm * breadthCm / 5000;
+  const useDWeight = lengthCm * heightCm * breadthCm / divisor;
 
   if (lengthCm && heightCm && breadthCm) {
     return (
       <div className="text-sm">
-        <b>Volumetric Used:</b> {lengthCm} x {breadthCm} x {heightCm} = {useDWeight.toFixed(2)}Kg
+        <b>Volumetric Used:</b> {lengthCm} x {breadthCm} x {heightCm} ÷ {divisor} = {useDWeight.toFixed(2)}Kg
       </div>
     )
   }
